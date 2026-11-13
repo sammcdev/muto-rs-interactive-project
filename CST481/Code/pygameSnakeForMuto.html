@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>pygameSnakeForMuto.py</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>pygameSnakeForMuto From November 5, 2025</h1>
+	</header>
+    <span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import pygame, sys
+import pygame.gfxdraw
+import random, time
+from datetime import datetime
+from MutoLib import Muto
+from pygame.locals import QUIT
+
+def findUSB():
+    for i  in range(0,50):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return 1
+
+
+<span class = "comment">#Search for elements on the game board</span>
+def searchSnakeHead(gameBoard):
+    for row in range(len(gameBoard)):
+        for col in range(len(gameBoard)):
+            if gameBoard[row][col] == 1:
+                <span class = "comment">#print("Snake Head: ",row, col)</span>
+                return row, col
+            
+def searchSnakeTrail(gameBoard):
+    trail = []
+    for row in range(len(gameBoard)):
+        for col in range(len(gameBoard)):
+            if gameBoard[row][col] == 0.5:
+                trail.append([row, col])
+    return trail
+
+def searchApple(gameBoard):
+    <span class = "comment">#print("finding apple here ", gameBoard)</span>
+    for row in range(len(gameBoard)):
+        for col in range(len(gameBoard)):
+            <span class = "comment">#print(gameBoard[row][col])</span>
+            if gameBoard[row][col] == 2:
+                <span class = "comment">#print('apple found')</span>
+                return row, col
+            
+<span class = "comment">#Check to see if the apple is in a certain coordinate</span>
+def checkApple(row, col, apRow, apCol):
+    if row == apRow and apCol == col:
+        return True
+    return False
+
+<span class = "comment">#Movement</span>
+def up(gameBoard, trail):
+    <span class = "comment">#Get rows and cols of snake head and apple</span>
+    row, col = searchSnakeHead(gameBoard)
+    apRow, apCol = searchApple(gameBoard)
+    score = 0
+    <span class = "comment">#Move the snake head</span>
+    gameBoard[row][col] = 0
+    gameBoard[row-1][col] = 1
+    <span class = "comment">#Add previous location to trail</span>
+    trail.append([row, col])
+    <span class = "comment">#Check to see if the head is now on the apple, and increment score if so</span>
+    nR, nC = searchSnakeHead(gameBoard)
+    if checkApple(nR, nC, apRow, apCol):
+        score += 1
+        randomApple(gameBoard)
+    return score
+
+def down(gameBoard, trail):
+    <span class = "comment">#Get rows and cols of snake head and apple</span>
+    row, col = searchSnakeHead(gameBoard)
+    apRow, apCol = searchApple(gameBoard)
+    score = 0
+    <span class = "comment">#Move the snake head, make sure it doesn't leave the bounds of the array</span>
+    if row+1 &lt; 5:
+        gameBoard[row][col] = 0
+        gameBoard[row+1][col] = 1
+        trail.append([row, col])
+    else:
+        gameBoard[row][col] = 0
+        gameBoard[0][col] = 1
+        trail.append([row, col])
+    <span class = "comment">#Check to see if the head is now on the apple, and increment score if so</span>
+    nR, nC = searchSnakeHead(gameBoard)
+    if checkApple(nR, nC, apRow, apCol):
+        score += 1
+        randomApple(gameBoard)
+    return score
+
+def left(gameBoard, trail):
+    <span class = "comment">#Get rows and cols of snake head and apple</span>
+    row, col = searchSnakeHead(gameBoard)
+    apRow, apCol = searchApple(gameBoard)
+    score = 0
+    <span class = "comment">#Move the snake head</span>
+    gameBoard[row][col] = 0
+    gameBoard[row][col-1] = 1
+    trail.append([row, col])
+    <span class = "comment">#Check to see if the head is now on the apple, and increment score if so</span>
+    nR, nC = searchSnakeHead(gameBoard)
+    if checkApple(nR, nC, apRow, apCol):
+        score += 1
+        randomApple(gameBoard)
+    return score
+
+def right(gameBoard, trail):
+    <span class = "comment">#Get rows and cols of snake head and apple</span>
+    row, col = searchSnakeHead(gameBoard)
+    apRow, apCol = searchApple(gameBoard)
+    score = 0
+    <span class = "comment">#Move the snake head, make sure it doesn't leave the bounds of the array</span>
+    if col+1 &lt; 5:
+        gameBoard[row][col] = 0
+        gameBoard[row][col+1] = 1
+    else:
+        gameBoard[row][col] = 0
+        gameBoard[row][0] = 1
+    trail.append([row, col])
+    <span class = "comment">#Check to see if the head is now on the apple, and increment score if so</span>
+    nR, nC = searchSnakeHead(gameBoard)
+    if checkApple(nR, nC, apRow, apCol):
+        score += 1
+        randomApple(gameBoard)
+    return score
+
+<span class = "comment">#Handle trail creation and deletion</span>
+def delTrail(gameBoard, trail, trailLegacy, score):
+    <span class = "comment">#Get rid of excess</span>
+    while len(trail) > score:
+        trail.pop(0)
+    while len(trailLegacy) > score+1:
+        trailLegacy.pop(0)
+    trailR = []
+    <span class = "comment">#Reverse so it is in the correct order of construction</span>
+    for i in trail:
+        trailR.append(i)
+    trailR.reverse()
+    apRow, apCol = searchApple(gameBoard)
+    row, col = searchSnakeHead(gameBoard)
+    s = score
+    <span class = "comment"># Make sure the tail length is set to a max</span>
+    if score > 5:
+        s = 5
+    <span class = "comment">#Draw the tail</span>
+    for i in range(s):
+        trailRow = trailR[i][0]
+        trailCol = trailR[i][1] 
+        if gameBoard[trailRow][trailCol] == 0:
+            gameBoard[trailRow][trailCol] = 0.5
+    dispTrail = searchSnakeTrail(gameBoard)
+    removeTrail = []
+    <span class = "comment">#Remove the extra tail segments</span>
+    for i in dispTrail:
+        if i not in trail:
+            removeTrail.append(i)
+    for r in range(len(gameBoard)):
+        for c in range(len(gameBoard)):
+            if gameBoard[r][c] == 0.5 and [r,c] in removeTrail:
+                gameBoard[r][c] = 0
+
+<span class = "comment">#Spawn a new apple</span>
+def randomApple(gameBoard):
+    while True:
+        appleX = random.randint(0,4)
+        appleY = random.randint(0,4)
+        if gameBoard[appleX][appleY] == 0:
+            gameBoard[appleX][appleY] = 2
+            break
+        
+<span class = "comment">#Checks for game end state and signals it when true</span>
+def checkGameOver(gameBoard, trail):
+    row, col = searchSnakeHead(gameBoard)
+    <span class = "comment">#print(trail)
+    #print(row,col)</span>
+    if [row, col] in trail:
+        print('Game Over')
+        return True
+    return False
+
+
+
+
+<span class = "comment"># Utility, unused currently</span>
+def timer(seconds):
+    t1 = datetime.now()
+    t1 = int(t1.second)
+    t2 = datetime.now()
+    t2 = int(t2.second)
+    while (t2 - t1) &lt; seconds:
+        t2 = datetime.now()
+        t2 = int(t2.second)
+
+def checkNum(i):
+    typ = 2
+    try:
+        j = type(int(i)) == type(typ)
+    except:
+        return False
+    else:
+        return True
+ 
+def main():
+    <span class = "comment"># Initialize Pygame</span>
+    pygame.init()
+    joysticks = {}
+    screen = pygame.display.set_mode((400, 400))
+    screen.fill('white')
+    pygame.display.set_caption('Hexapod Muto RS Control  Center')
+
+    clock = pygame.time.Clock()
+
+    <span class = "comment">#background = pygame.image.load('test.png')</span>
+    background = pygame.Surface((400,400))
+
+    font = pygame.font.SysFont('arial',30)
+
+    <span class = "comment">#Hit selections</span>
+    field = []
+    for i in range(5):
+        field.append([])
+        for j in range(5):
+            field[i].append(pygame.Surface((80, 80)))
+            
+    fieldCoords = []
+
+    for i in range(5):
+        for j in range(5):
+            field[i][j].fill("white")
+
+    for i in range(5):
+        fieldCoords.append([])
+        for j in range(5):
+            fieldCoords[i].append((0 if i &lt; 1 else 80*i, 0 if j &lt; 1 else 80*j))
+
+    g_bot = Muto(f'/dev/ttyUSB{findUSB()}')
+    gSpeed = 1
+    gStep = 10
+    headHeight = 5
+    emoteChoice = 0
+    
+    score = 0
+    gameBoard = []
+    ask = ''
+    roundNum = 1
+    for i in range(5):
+            gameBoard.append([0,0,0,0,0])
+    gameBoard[0][1] = 1
+    randomApple(gameBoard)
+    <span class = "comment">#asciiDraw(gameBoard)</span>
+    trail = []
+    trailLegacy = []
+    track = 0 <span class = "comment">#Halves game logic speed</span>
+            
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.WINDOWFOCUSLOST:
+                screen = pygame.display.set_mode((400, 400))
+
+            if event.type == pygame.JOYDEVICEADDED:
+                    <span class = "comment"># This event will be generated when the program starts for every
+                    # joystick, filling up the list without needing to create them manually.</span>
+                joy = pygame.joystick.Joystick(event.device_index)
+                joysticks[joy.get_instance_id()] = joy
+                print(f"Joystick {joy.get_instance_id()} connencted")
+
+            if event.type == pygame.JOYDEVICEREMOVED:
+                del joysticks[event.instance_id]
+                print(f"Joystick {event.instance_id} disconnected")
+    
+        axes, buttons, hats = 0,0,0
+        for joystick in joysticks.values():
+            axes = joystick.get_numaxes()
+            buttons = joystick.get_numbuttons()
+            hats = joystick.get_numhats()
+        
+        keys = pygame.key.get_pressed()
+        hat = joystick.get_hat(0)
+        name = joystick.get_name()
+        screen.blit(background,(0,0))
+        
+        track += 1        
+        
+        if keys[pygame.K_a] or hat[0] == -1:
+            ask = 'a'
+            g_bot.left(gStep)
+        if keys[pygame.K_d] or hat[0] == 1:
+            ask = 'd'
+            g_bot.right(gStep)
+        if keys[pygame.K_w] or hat[1] == 1:
+            ask = 'w'
+            g_bot.forward(gStep)
+        elif keys[pygame.K_s] or hat[1] == -1:
+            ask = 's'
+            g_bot.back(gStep)
+        else:
+            g_bot.stop()
+            g_bot.buzzer(0)
+        if track == 2:
+            trailLegacy = trail
+            if ask == "break":
+                break
+            elif ask == 'w':
+                score += up(gameBoard, trail)
+            elif ask == 'a':
+                score += left(gameBoard, trail)
+            elif ask == 's':
+                score += down(gameBoard, trail)
+            elif ask == 'd':
+                score += right(gameBoard, trail)
+            <span class = "comment">#Trail logic function</span>
+            delTrail(gameBoard, trail, trailLegacy, score)
+            <span class = "comment">#Redraw board</span>
+            for row in range(len(gameBoard)):
+                for col in range(len(gameBoard)):
+                    if gameBoard[row][col] == 0:
+                        field[col][row].fill("white")
+                    elif gameBoard[row][col] == 1:
+                        field[col][row].fill("blue")
+                    elif gameBoard[row][col] == 0.5:
+                        field[col][row].fill("green")
+                    else:
+                        field[col][row].fill("red")
+            <span class = "comment">#Game over check</span>
+            if checkGameOver(gameBoard, trailLegacy):
+                print(f'Score for Round {roundNum}: {score}')
+                roundNum += 1
+                score = 0
+                gameBoard = []
+                ask = ''
+                for i in range(5):
+                    gameBoard.append([0,0,0,0,0])
+                gameBoard[0][1] = 1
+                randomApple(gameBoard)
+                trail = []
+                trailLegacy = []
+                g_bot.stop()
+                g_bot.buzzer(255)
+                timer(3)
+                g_bot.buzzer(0)
+
+        <span class = "comment">#Render screen objects</span>
+        for i in range (5):
+            for j in range(5):
+                screen.blit(field[i][j], (fieldCoords[i][j][0],fieldCoords[i][j][1]))
+        
+        pygame.display.update()
+        clock.tick(10)
+        if track > 1:
+            track = 0
+
+main()			
+		</pre>
+        </div>
+	</main>
+    </span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

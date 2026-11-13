@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>jetsonClient.py</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>jetsonClient.py From December 4, 2025</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import cv2
+import numpy as np
+import math
+import datetime
+import socket, struct, io, ssl
+from pathlib import Path
+from PIL import Image 
+
+<span class = "comment"># Get msg from message commmand</span>
+def msgCmd(seq):
+    seq = seq.split(' ')
+    newStr = ''
+    for i in range(1, len(seq)):
+        if i &lt; len(seq) - 1:
+            newStr += seq[i] + ' '
+        else:
+            newStr += seq[i]
+    return newStr
+
+<span class = "comment">#Convert image to bytestream (from instructor-provided code)</span>
+def pil_to_bytes(img: Image.Image, fmt="JPEG", q = 70) -> bytes:
+    <span class = "comment"># Encode a PIL image to bytes (PNG/JPEG/etc.)</span>
+    buf = io.BytesIO()
+    img.save(buf, format=fmt, quality = q)
+    return buf.getvalue()
+
+def recvall(sock, n: int) -> bytes:
+    <span class = "triplequote">""""Receive exactly n bytes or raise ConnectionError."""</span>"
+    data = bytearray()
+    while len(data) &lt; n:
+        chunk = sock.recv(n - len(data))
+        if not chunk:
+            raise ConnectionError("Socket connection closed early")
+        data += chunk
+    return bytes(data)
+
+def handle_client(conn, errors, file = "PNG"):
+    try:
+        <span class = "comment"># Read 8-byte big-endian length</span>
+        header = recvall(conn, 8)
+        (length,) = struct.unpack(">Q", header)
+        <span class = "comment"># Read image payload</span>
+        payload = recvall(conn, length)
+
+        <span class = "comment"># Turn bytes -> PIL.Image</span>
+        img = Image.open(io.BytesIO(payload)).convert("RGB")
+
+        <span class = "comment"># Get time for unique name</span>
+        time = datetime.datetime.now()
+        time = str(time)
+        time = time.split(".")
+        time = time[0] + "-" + time[1]
+        time = time.split(":")
+        newTime = ""
+        for i in time:
+            newTime += i
+        newTime = newTime.split(" ")
+        newTime = newTime[0] + "-" + newTime[1]
+        
+        <span class = "comment">#print(f"Received image {img.size} mode={img.mode}")</span>
+        <span class = "comment"># Do something with it: save or process</span>
+        extension = 'jpg' if file == 'JPEG' else 'png'
+        img.save(f"snapshotJetson.{extension}", format = file)
+        errors = 0
+    except Exception as e:
+        <span class = "comment">#print("Error:", e)</span>
+        errors += 1
+        <span class = "comment"># If more than 10 errors, end </span>
+        if errors > 10:
+            print('Closing connection.')
+            return True, errors
+    
+    return False, errors
+
+<span class = "comment"># ----------------------------</span>
+<span class = "comment"># Config: HSV color thresholds (tune to your lighting)</span>
+<span class = "comment"># Hue: 0..179, Sat/Val: 0..255</span>
+<span class = "comment"># ----------------------------</span>
+COLOR_RANGES = {
+    "RED":    [((0,  40, 120), (10, 70, 255)), ((170, 80, 60), (179,255,255))],
+    "GREEN":  [((35, 60, 60), (85,  255,255))],
+    "BLUE":   [((70, 90, 90), (110,  255,255))],
+    "YELLOW": [((20, 100, 100), (30, 255, 255))],
+} <span class = "comment"># [((40, 200, 200), (120, 255, 255)), ((40, 80, 120), (70, 230, 255))]</span>
+LABEL_BGR = {
+    "RED": (0,0,255), "GREEN": (0,255,0), "BLUE": (255,0,0),
+    "YELLOW": (0,255,255)
+}
+
+<span class = "comment"># Expected ball radius range in pixels (set these for your scene!)</span>
+MIN_R, MAX_R = 12, 180
+
+<span class = "comment"># Face Detection</span>
+cascade_dir = Path(cv2.data.haarcascades) 
+face_xml = cascade_dir / "haarcascade_frontalface_default.xml"
+eye_xml  = cascade_dir / "haarcascade_eye.xml"
+
+face = cv2.CascadeClassifier(str(face_xml))
+eye  = cv2.CascadeClassifier(str(eye_xml))
+
+if face.empty():
+    raise IOError(f"Failed to load {face_xml}")
+
+if eye.empty():
+    raise IOError(f"Failed to load {eye_xml}")
+
+<span class = "comment"># ----------------------------</span>
+<span class = "comment"># Utilities</span>
+<span class = "comment"># ----------------------------</span>
+def open_first_camera(indices=(0,1,2), backends=(cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY)):
+    <span class = "triplequote">""""Try several camera indices/backends and return the first that works."""</span>"
+    for idx in indices:
+        for be in backends:
+            cap = cv2.VideoCapture(idx, be)
+            if cap.isOpened():
+                ok, _ = cap.read()
+                if ok:
+                    print(f"[OK] Camera index {idx} (backend={be})")
+                    return cap
+            cap.release()
+    return None
+
+def build_masks(hsv):
+    <span class = "triplequote">""""Return union mask and per-color masks (denoised)."""</span>"
+    masks = {}
+    union = np.zeros(hsv.shape[:2], np.uint8)
+    k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
+    for label, ranges in COLOR_RANGES.items():
+        m = np.zeros(hsv.shape[:2], np.uint8)
+        for lo, hi in ranges:
+            lo = np.array(lo, np.uint8); hi = np.array(hi, np.uint8)
+            m |= cv2.inRange(hsv, lo, hi)
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN,  k, iterations=1)
+        m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, k, iterations=1)
+        masks[label] = m
+        union |= m
+    return union, masks
+
+def classify_color_hsv(hsv, center, radius, min_coverage=0.25):
+    <span class = "triplequote">""""Pick the color occupying the most pixels inside the circle."""</span>"
+    h, w = hsv.shape[:2]
+    cx, cy, r = int(center[0]), int(center[1]), int(radius)
+    circ = np.zeros((h, w), np.uint8)
+    cv2.circle(circ, (cx, cy), r, 255, -1)
+    area = math.pi * r * r
+
+    best_label, best_score = "UNKNOWN", 0
+    for label, ranges in COLOR_RANGES.items():
+        m = np.zeros((h, w), np.uint8)
+        for lo, hi in ranges:
+            m |= cv2.inRange(hsv, np.array(lo, np.uint8), np.array(hi, np.uint8))
+        score = cv2.countNonZero(cv2.bitwise_and(m, circ))
+        if score > best_score:
+            best_label, best_score = label, score
+
+    return best_label if best_score >= min_coverage * area else "UNKNOWN"
+
+def detect_with_hough(gray_masked):
+    circles = cv2.HoughCircles(
+        gray_masked, cv2.HOUGH_GRADIENT,
+        dp=1.25,          <span class = "comment"># 1.2–1.5; higher -> fewer circles</span>
+        minDist=40,       <span class = "comment"># spacing between centers</span>
+        param1=160,       <span class = "comment"># Canny high threshold</span>
+        param2=26,        <span class = "comment"># accumulator (raise if too many FPs, lower if none)</span>
+        minRadius=MIN_R,
+        maxRadius=MAX_R
+    )
+    return None if circles is None else np.uint16(np.around(circles[0, :]))
+
+def detect_with_contours(masks_per_color):
+    <span class = "triplequote">""""Fallback: find roughly circular blobs per color mask."""</span>"
+    dets = []
+    for label, m in masks_per_color.items():
+        cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for c in cnts:
+            area = cv2.contourArea(c)
+            if area &lt; 200:
+                continue
+            perim = cv2.arcLength(c, True)
+            if perim == 0:
+                continue
+            circularity = 4 * math.pi * area / (perim * perim)  <span class = "comment"># 1.0 = circle</span>
+            (x, y), r = cv2.minEnclosingCircle(c)
+            if r &lt; MIN_R or r > MAX_R:
+                continue
+            fill = area / (math.pi * r * r)
+            if circularity >= 0.65 and fill >= 0.60:
+                dets.append((int(x), int(y), int(r), label))
+    return dets
+
+<span class = "comment"># ----------------------------</span>
+<span class = "comment"># Main</span>
+<span class = "comment"># ----------------------------</span>
+
+def main():
+    <span class = "comment"># Create client socket</span>
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip = input('Enter the IP you are connecting to, otherwise leave empty for local host: ')
+    if ip == '':
+        ip = 'localhost'
+    <span class = "comment"># Create SSL context for client</span>
+    context = ssl.create_default_context()
+    
+    <span class = "comment"># Removes host name and makes it so the certificate is not verified as it is self-signed</span>
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+
+    client_socket = context.wrap_socket(client_socket)
+    client_socket.connect((ip, 5050))
+
+    print("Connected to server.")    
+    client_socket.sendall('jetson'.encode())
+    <span class = "comment"># Open camera</span>
+    cap = 1
+
+    cv2.namedWindow("Jetson Detection", cv2.WINDOW_NORMAL)
+    print("Press 'd' = show color mask, 'q' or Esc = quit.")
+    
+    show_mask = False
+    MASK_WIN = "Color Mask (union)"
+
+    timeBegin = int(client_socket.recv(1024).decode())
+    print(timeBegin)
+    faceFound = False
+    faceSent = False
+    waitTime = 5
+
+    while True:
+        errors = 0
+        frame = 0
+        end, errors = handle_client(client_socket, errors, "JPEG")
+        if end:
+            break
+        frame = cv2.imread('snapshotJetson.jpg')
+
+        blur = cv2.GaussianBlur(frame, (7,7), 0)
+        hsv  = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+        union_mask, masks_per_color = build_masks(hsv)
+
+        <span class = "comment"># Hough on masked grayscale</span>
+        gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
+        face_rects = face.detectMultiScale(gray, 1.3, 5)
+        gray_masked = cv2.bitwise_and(gray, gray, mask=union_mask)
+        circles = detect_with_hough(gray_masked)
+
+        output = frame.copy()
+        detections = []
+
+        if circles is not None and len(circles) > 0:
+            for (x, y, r) in circles:
+                label = classify_color_hsv(hsv, (x, y), r, min_coverage=0.25)
+                if label != "UNKNOWN":
+                    detections.append((x, y, r, label))
+
+        <span class = "comment"># Fallback if Hough found nothing useful</span>
+        if len(detections) == 0:
+            detections = detect_with_contours(masks_per_color)
+
+        <span class = "comment"># Draw</span>
+        if detections:
+            for (x, y, r, label) in detections:
+                cv2.circle(output, (x, y), r, (255,255,255), 2)
+                cv2.circle(output, (x, y), 2, (255,255,255), 3)
+                cv2.putText(output, label, (x - r, max(22, y - r - 8)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, LABEL_BGR[label], 2, cv2.LINE_AA)
+
+            c = 0
+            for (x, y, r, label) in detections:
+                <span class = "comment">#print('Detecting...')</span>
+                if 'green' in label.lower():
+                    c += 1
+                    if x &lt; 221:
+                        client_socket.sendall('left'.encode())
+                    elif x > 379:
+                        client_socket.sendall('right'.encode())
+                    else:
+                        client_socket.sendall('forward'.encode())
+                    
+            if c == 0:
+                client_socket.sendall('0'.encode())
+        else:
+            <span class = "comment">#print('Detecting...')</span>
+            client_socket.sendall('0'.encode())
+            cv2.putText(output, "No balls detected", (18, 28),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 200, 255), 2, cv2.LINE_AA)
+
+        <span class = "comment"># Draw rectangle around face</span>
+        for (x,y,w,h) in face_rects:
+            cv2.rectangle(output, (x,y), (x+w,y+h), (0,255,0), 3)
+            <span class = "comment"># Reset timer if no face</span>
+            if not faceFound:
+                timeBegin = datetime.datetime.now()
+                timeBegin = timeBegin.second
+                faceFound = True
+            else:
+                timeNow = datetime.datetime.now()
+                timeNow = timeNow.second
+                if abs(timeBegin - timeNow) > waitTime:
+                    faceFound = False
+                    client_socket.sendall('face'.encode())
+                    faceSent = True
+                    timeBegin = datetime.datetime.now()
+                    timeBegin = timeBegin.second
+
+        if len(face_rects) == 0:
+            faceFound = False
+
+        if not faceSent:
+            client_socket.sendall('0'.encode())
+        else:
+            faceSent = False
+
+        cv2.imshow("Jetson Detection", output)
+        
+        cv2.imwrite('snapshotJetson.jpg', output)
+        img = Image.open('snapshotJetson.jpg')
+        img = Image.open('snapshotJetson.jpg').convert('RGB')
+        payload = pil_to_bytes(img)
+        client_socket.sendall(struct.pack(">Q", len(payload)))
+        client_socket.sendall(payload)
+        img.close()
+        
+        if show_mask:
+            cv2.imshow("Color Mask (union)", union_mask)
+        <span class = "comment">#else:</span>
+            <span class = "comment">#cv2.destroyWindow("Color Mask (union)")</span>
+
+        serverEnd = client_socket.recv(1024).decode()
+        if serverEnd == 'END':
+            break
+
+        key = cv2.waitKey(1) & 0xFF
+        if key in (27, ord('q'), ord('Q')):
+            client_socket.sendall('END'.encode())
+        elif key in (ord('d'), ord('D')):
+            <span class = "comment"># toggle mask view</span>
+            show_mask = not show_mask
+            if not show_mask:
+                <span class = "comment"># only destroy when we just turned it off</span>
+                try:
+                    cv2.destroyWindow(MASK_WIN)
+                except cv2.error:
+                    pass  <span class = "comment"># window may already be gone</span>
+            client_socket.sendall('CONTINUE'.encode())
+        else:
+            client_socket.sendall('CONTINUE'.encode())
+
+        serverEnd = client_socket.recv(1024).decode()
+        if serverEnd == 'END':
+            break
+                
+    cv2.destroyAllWindows()
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()			
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

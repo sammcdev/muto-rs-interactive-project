@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>controlInteractive5,py</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>controlInteractive5 From October 15, 2025</h1>
+	</header>
+    <span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import pygame, sys
+import pygame.gfxdraw
+import random, time
+from datetime import datetime
+from MutoLib import Muto
+from pygame.locals import QUIT
+
+<span class = "comment"># Initialize Pygame</span>
+pygame.init()
+joysticks = {}
+screen = pygame.display.set_mode((400, 400))
+screen.fill('white')
+pygame.display.set_caption('Hexapod Muto RS Control  Center')
+
+clock = pygame.time.Clock()
+background = pygame.Surface((400,400))
+font = pygame.font.SysFont('arial',30)
+
+<span class = "comment"># Function for setting up connection with the Hexapod Muto RS robot</span>
+def findUSB():
+    for i  in range(0,50):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return 1
+
+<span class = "comment"># Utility, unused currently</span>
+def timer(seconds):
+    t1 = datetime.now()
+    t1 = int(t1.second)
+    t2 = datetime.now()
+    t2 = int(t2.second)
+    while (t2 - t1) &lt; seconds:
+        t2 = datetime.now()
+        t2 = int(t2.second)
+
+def checkNum(i):
+    typ = 2
+    try:
+        j = type(int(i)) == type(typ)
+    except:
+        return False
+    else:
+        return True
+
+def wave(g_bot):
+    for i in range(3):
+        g_bot.motor(2, -90, 100)
+        g_bot.motor(3, 90, 100)
+        time.sleep(0.3)
+        g_bot.stop()
+        g_bot.reset()
+        time.sleep(0.3)
+
+def dance(g_bot):
+    shiftDown = 7
+    shiftUp = 4
+    for i in range(3):
+        g_bot.motor(2, shiftDown, 100)
+        g_bot.motor(5, shiftDown, 100)
+        g_bot.motor(8, shiftDown, 100)
+
+        g_bot.motor(12, shiftUp, 100)
+        g_bot.motor(15, shiftUp, 100)
+        g_bot.motor(18, shiftUp, 100)
+
+        time.sleep(0.75)
+        g_bot.stop()
+        g_bot.reset()
+        time.sleep(0.5)
+
+        g_bot.motor(11, shiftDown, 100)
+        g_bot.motor(14, shiftDown, 100)
+        g_bot.motor(17, shiftDown, 100)
+
+        g_bot.motor(3, shiftUp, 100)
+        g_bot.motor(6, shiftUp, 100)
+        g_bot.motor(9, shiftUp, 100)
+        
+        time.sleep(0.75)
+        g_bot.stop()
+        g_bot.reset()
+        time.sleep(0.5)
+
+def peacockSpider(g_bot):
+    g_bot.motor(4, 45, 100)
+    g_bot.motor(13, -45, 100)
+    time.sleep(0.25)
+
+    for i in range(3):
+        g_bot.motor(2, -90, 200)
+        g_bot.motor(3, 90, 200)
+        g_bot.motor(17, -90, 200)
+        g_bot.motor(18, 90, 200)
+        time.sleep(0.5)
+        g_bot.motor(2, 0, 200)
+        g_bot.motor(3, 0, 200)
+        g_bot.motor(17, 0, 200)
+        g_bot.motor(18, 0, 200)
+        time.sleep(0.3)
+    
+    g_bot.stop()
+    g_bot.reset()
+
+<span class = "comment"># Initialize Muto robot</span>
+g_bot = Muto(f'/dev/ttyUSB{findUSB()}')
+gSpeed = 1
+gStep = 10
+headHeight = 5
+emoteChoice = 0
+
+<span class = "comment"># Runtime</span>
+while True:
+    <span class = "comment"># Closing the window will end the program</span>
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.WINDOWFOCUSLOST:
+            screen = pygame.display.set_mode((400, 400))
+                
+            <span class = "comment"># Handle hotplugging</span>
+        if event.type == pygame.JOYDEVICEADDED:
+                <span class = "comment"># This event will be generated when the program starts for every
+                # joystick, filling up the list without needing to create them manually.</span>
+            joy = pygame.joystick.Joystick(event.device_index)
+            joysticks[joy.get_instance_id()] = joy
+            print(f"Joystick {joy.get_instance_id()} connencted")
+
+        if event.type == pygame.JOYDEVICEREMOVED:
+            del joysticks[event.instance_id]
+            print(f"Joystick {event.instance_id} disconnected")
+    <span class = "comment"># Get controls</span>
+    axes, buttons, hats = 0,0,0
+    for joystick in joysticks.values():
+        axes = joystick.get_numaxes()
+        buttons = joystick.get_numbuttons()
+        hats = joystick.get_numhats()
+
+    hat = joystick.get_hat(0)
+        
+    name = joystick.get_name()
+    
+            
+    keys = pygame.key.get_pressed()
+
+    usedKeys = [keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_s],
+                keys[pygame.K_d],keys[pygame.K_f], keys[pygame.K_q],
+                keys[pygame.K_e], keys[pygame.K_i], keys[pygame.K_o],
+                keys[pygame.K_p], keys[pygame.K_r], keys[pygame.K_g],
+                keys[pygame.K_v], keys[pygame.K_z], 
+                keys[pygame.K_j], keys[pygame.K_k], keys[pygame.K_l]]
+    <span class = "comment"># Act based on controls</span>
+    
+    if usedKeys[0] or hat[1] == 1:
+        g_bot.forward(gStep)
+        
+    elif usedKeys[1] or hat[0] == -1:
+        g_bot.left(gStep)
+        
+    elif usedKeys[2] or hat[1] == -1:
+        g_bot.back(gStep)
+        
+    elif usedKeys[3] or hat[0] == 1:
+        g_bot.right(gStep)
+        
+    elif usedKeys[5] or joystick.get_button(6):
+        g_bot.turnleft(gStep)
+
+    elif usedKeys[6] or joystick.get_button(7):
+        g_bot.turnright(gStep)
+
+    elif usedKeys[7] or joystick.get_button(8):
+        if gSpeed > 1:
+            gSpeed -= 1
+
+    elif usedKeys[15] or joystick.get_button(3): <span class = "comment"># X </span>
+        dance(g_bot)
+
+    elif usedKeys[9] or joystick.get_button(9):
+        if gSpeed &lt; 5:
+            gSpeed += 1
+
+    elif usedKeys[10] or joystick.get_button(10):
+        if gStep > 10:
+            gSpeed -= 1
+
+    elif usedKeys[12] or joystick.get_button(11):
+        if gStep &lt; 25:
+            gSpeed += 1
+
+    elif usedKeys[11]: <span class = "comment"># G on keyboard</span>
+        gStep = 10
+
+    elif usedKeys[8]: <span class = "comment"># O on keyboard, reset speed</span>
+        gSpeed = 1
+
+    elif usedKeys[14] or joystick.get_button(1): <span class = "comment"># B</span>
+        wave(g_bot)
+        
+    elif usedKeys[16] or joystick.get_button(4): <span class = "comment"># Y on controller</span>
+        peacockSpider(g_bot)
+      
+    else: <span class = "comment"># If no input, disable buzzer and reset movement</span>
+        g_bot.stop()
+
+    if usedKeys[4] or joystick.get_button(0): <span class = "comment"># A</span>    
+        g_bot.buzzer(255)
+    else:
+        g_bot.buzzer(0)
+        
+    g_bot.speed(gSpeed) <span class = "comment"># Update speed to gSpeed</span>
+
+    pygame.display.update() <span class = "comment"># Update Pygame display</span>
+    clock.tick(20) <span class = "comment"># Framerate of window and input detection, can be changed</span>		
+		</pre>
+        </div>
+	</main>
+    </span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

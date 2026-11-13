@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>projectServer.py</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>projectServer.py From December 4, 2025</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import socket, struct, io, ssl
+from PIL import Image
+import datetime
+
+<span class = "comment">#Send message to all</span>
+def sendToAll(clients, msg):
+    for i in range(len(clients)):
+        clients[i][1].sendall(msg.encode())
+
+<span class = "comment"># Sample code provided by instructor for receiving image</span>
+def recvall(sock, n: int) -> bytes:
+    <span class = "triplequote">"""Receive exactly n bytes or raise ConnectionError."""</span>
+    data = bytearray()
+    while len(data) &lt; n:
+        chunk = sock.recv(n - len(data))
+        if not chunk:
+            raise ConnectionError("Socket connection closed early")
+        data += chunk
+    return bytes(data)
+
+def handle_client(conn, addr, errors, file = "PNG"):
+    name = ''
+    try:
+        <span class = "comment"># Read 8-byte big-endian length</span>
+        header = recvall(conn, 8)
+        (length,) = struct.unpack(">Q", header)
+        <span class = "comment"># Read image payload</span>
+        payload = recvall(conn, length)
+
+        <span class = "comment"># Turn bytes -> PIL.Image</span>
+        img = Image.open(io.BytesIO(payload)).convert("RGB")
+
+        <span class = "comment"># Get time for unique name</span>
+        time = datetime.datetime.now()
+        time = str(time)
+        time = time.split(".")
+        time = time[0] + "-" + time[1]
+        time = time.split(":")
+        newTime = ""
+        for i in time:
+            newTime += i
+        newTime = newTime.split(" ")
+        newTime = newTime[0] + "-" + newTime[1]
+        name = newTime
+        
+        <span class = "comment">#print(f"Received image {img.size} mode={img.mode} from {addr}")</span>
+        <span class = "comment"># Do something with it: save or process</span>
+        extension = 'jpg' if file == 'JPEG' else 'png'
+        img.save(f"snapshot.{extension}", format = file)
+        errors = 0
+    except Exception as e:
+        <span class = "comment">#print("Error:", e)</span>
+        errors += 1
+        # If more than 10 errors, end 
+        if errors > 10:
+            print('Closing connection.')
+            return True, errors, ''
+    
+    return False, errors, name
+
+def pil_to_bytes(img: Image.Image, fmt="JPEG", q = 70) -> bytes:
+    <span class = "comment"># Encode a PIL image to bytes (PNG/JPEG/etc.)</span>
+    buf = io.BytesIO()
+    img.save(buf, format=fmt, quality = q)
+    return buf.getvalue()
+
+def main():
+    <span class = "comment"># Create a server socket</span>
+    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    context.load_cert_chain(certfile='cert.pem', keyfile='cert.pem')
+
+    server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    server_socket.bind(('0.0.0.0', 5050)) <span class = "comment"># Bind IP and port</span>
+    server_socket.listen()
+    print("Server is running... Waiting for the clients to connect.")
+    <span class = "comment"># Accept a client connection</span>
+    clients = []
+    count = 0
+    while count &lt; 2:
+        client_socket, addr = server_socket.accept()
+        client_socket = context.wrap_socket(client_socket, server_side=True)
+        rsp = client_socket.recv(1024).decode()
+        clients.append([rsp, client_socket, addr])
+        print(clients[count])
+        count += 1
+
+    mutoIndex, jetsonIndex = 0, 0
+    count = 0
+    for i in range(len(clients)):
+        if clients[i][0] == 'muto':
+            mutoIndex = count
+            count += 1
+        elif clients[i][0] == 'jetson':
+            jetsonIndex = count
+            count += 1
+    print('muto:', mutoIndex)
+    print('jetson:', jetsonIndex)
+    cmd = ''
+
+    timeBegin = datetime.datetime.now()
+    timeBegin = timeBegin.second
+    clients[jetsonIndex][1].sendall(str(timeBegin).encode())
+    print(f'Time received, telling Muto on index {mutoIndex} to continue.')
+    clients[mutoIndex][1].sendall('continue'.encode())
+
+    print(timeBegin)
+    timeLater = 0
+
+    errors = 0
+    end = False
+    while True:
+        <span class = "comment"># Handle photo reception and saving, and ending the program</span>
+        <span class = "comment"># The way of ending the server will likely be changed in the future</span>
+        #print('Getting photo from Muto.')
+        clients[mutoIndex][1].sendall('NEXT'.encode())
+        end, errors, name = handle_client(clients[mutoIndex][1], clients[mutoIndex][2], errors, file = "JPEG")
+        if end:
+            break
+        <span class = "comment">#print('Forwarding.')</span>
+        img = Image.open('snapshot.jpg').convert('RGB')
+        payload = pil_to_bytes(img)
+        clients[jetsonIndex][1].sendall(struct.pack(">Q", len(payload)))
+        clients[jetsonIndex][1].sendall(payload)
+        img.close()
+        
+        <span class = "comment">#print('Receiving and forwarding movement.')</span>
+        movement = clients[jetsonIndex][1].recv(1024)
+        clients[mutoIndex][1].sendall(movement)
+
+        <span class = "comment"># Forward face detection</span>
+        <span class = "comment">#print('Receiving and forwarding face detection.')</span>
+        face = clients[jetsonIndex][1].recv(1024)
+        clients[mutoIndex][1].sendall(face)
+
+        timeLater = datetime.datetime.now()
+        timeLater = timeLater.second
+
+        end, errors, name = handle_client(clients[jetsonIndex][1], clients[jetsonIndex][2], errors, file = "JPEG")
+        if abs(timeBegin - timeLater) > 10:
+            <span class = "comment">#print('Saving photo for debug.')</span>
+            timeBegin = datetime.datetime.now()
+            timeBegin = timeBegin.second
+            img = Image.open('snapshot.jpg')
+            img.save(f'{name}.jpg', format = "JPEG", quality = 40)
+            img.close()
+
+        mutoEnd = clients[mutoIndex][1].recv(1024).decode()
+        if mutoEnd == 'END':
+            sendToAll(clients, 'END')
+            break
+        else:
+            sendToAll(clients, 'CONTINUE')
+
+        jetsonEnd = clients[jetsonIndex][1].recv(1024).decode()
+        if jetsonEnd == 'END':
+            sendToAll(clients, 'END')
+            break
+        else:
+            sendToAll(clients, 'CONTINUE')
+
+    <span class = "comment"># Close the connection to the client and the server socket</span>
+    for i in range(len(clients)):
+        clients[i][1].close()
+    server_socket.close()
+
+main()			
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

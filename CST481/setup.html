@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Jetson Nano Setup</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>Jetson Nano Setup</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "./">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<h2>Jetpack OS Installation Guide</h2>
+        <h3>Prerequisites</h3>
+        <ul>
+            <li>An Internet connection</li>
+            <li>Computer with <a href="https://releases.ubuntu.com/18.04/">Ubuntu 18.04.6 LTS</a> installed</li>
+            <li>Install of <a href = "https://developer.nvidia.com/embedded/jetpack-sdk-461">NVIDIA SDK Manager</a> on that computer for Jetpack 4.6.6</li>
+            <li>Pin jumper for the Jetson Nano</li>
+            <li>Micro-USB to USB A cable to keep the Jetson Nano connected to the computer</li>
+			<li>Make sure the computer is connected to a power source that is reliable</li>
+        </ul>
+		<h3>
+			Setup and Installation
+		</h3>
+		<p>
+			This is the Jetson Nano B01 board with the card with the heatsink removed from the SODIMM slot. The pins can be seen below it. 
+			<div>
+            <figure style = "text-align:center">
+					<img class = "media" src = "Images/jetsonboardbeginsetup.jpg" alt = "Jetson Board Without Card" width="200" height="280.5">
+            		<figcaption style = "font-size:small;">Jetson Board Without Card</figcaption>
+			</figure>
+        	</div>
+			Then, you need to locate two pins that are next to one another on the array that looks like this. The pins are FC REC and GND. When I flashed it, I personally used the GND one below FC REC.
+			<div>
+            <figure style = "text-align:center">
+					<img class = "media" src = "Images/jetsonpins.jpg" alt = "Jetson Nano Pins" width="200" height="362">
+            		<figcaption style = "font-size:small;">Jetson Nano Pins</figcaption>
+			</figure>
+        	</div>
+			Then, you want to put the pin jumper that should have came with the Muto RS robot kit from Yahboom onto the pins as depicted below. This enters the board into recovery mode.
+			<div>
+            <figure style = "text-align:center">
+					<img class = "media" src = "Images/recoverypin.jpg" alt = "Jetson Recovery Pins" width="242" height="300">
+            		<figcaption style = "font-size:small;">Jetson Recovery Pins</figcaption>
+			</figure>
+			After this, you just need to reconnect the Jetson Nano card you removed to access the pins and then plug it into your computer that has Ubuntu 18.04.6 LTS with the Micro-USB port on the Jetson Nano.
+        	<div>
+            <figure style = "text-align:center">
+					<img class = "media" src = "Images/boardandcable.jpg" alt = "Jetson Nano and Cable" width="300" height="275">
+            		<figcaption style = "font-size:small;">Jetson Nano and Cable</figcaption>
+			</figure>
+        	</div>
+			From this point, open the NVIDIA SDK Launcher on your computer, login, and then it should detect the board and guide you through what needs to be installed.<br>
+			NVIDIA provides a more comprehensive guide of using <a href = "https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html">NVIDIA SDK Manager</a>.
+		</p>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

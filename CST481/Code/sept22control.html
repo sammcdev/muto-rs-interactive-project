@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Control from September 22, 2025</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>control.py from September 22, 2025</h1>
+	</header>
+    <span id = "wrapflex">
+	<nav>
+        <ul>
+		    <li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+from datetime import datetime
+from MutoLib import Muto
+
+def findUSB():
+    for i  in range(0,5):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return -1
+
+def timer(seconds):
+    t1 = datetime.now()
+    t1 = int(t1.second)
+    t2 = datetime.now()
+    t2 = int(t2.second)
+    while (t2 - t1) &lt; seconds:
+        t2 = datetime.now()
+        t2 = int(t2.second)
+
+def checkNum(i):
+    typ = 2
+    try:
+        j = type(int(i)) == type(typ)
+    except:
+        return False
+    else:
+        return True
+
+def move(d, time, bot):
+    if d == 'w':
+        bot.forward(10)
+    elif d == 's':
+        bot.back(10)
+    elif d == 'a':
+        bot.left(10)
+    elif d == 'd':
+        bot.right(10)
+    time = int(time)
+    timer(time)
+    bot.stop()
+    bot.reset
+
+def main():
+    usbNum = findUSB()
+    if usbNum == -1:
+        print("Device not found.")
+        return 0
+    else:
+        print(f'Interfacing with ttyUSB{usbNum}')
+        g_bot = Muto(f'/dev/ttyUSB{usbNum}')
+        g_bot.stop()
+        while True:
+            i = input("MOVEMENT: w, a, s, or d\nBUZZER: Input a time * 100 ms\nEnter EXIT to end program.\n")
+            if i == 'EXIT':
+                break
+            elif i == 'w' or i == 'd' or i == 'a' or i == 's':
+                j = input('Input time to move in seconds: ')
+                if not checkNum(j):
+                    print('That is not a number.')
+                    continue
+                move(i, j, g_bot)
+            elif checkNum(int(i)):
+                g_bot.buzzer(int(i))
+            else:
+                print('Improper input.')
+        g_bot.stop()      
+        g_bot.reset()
+
+main()
+        </pre>
+        </div>
+	</main>
+    </span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

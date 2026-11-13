@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>controlInteractive</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<header>
+		<h1>controlInteractive.py from September 24, 2025</h1>
+	</header>
+    <span id = "wrapflex">
+	<nav>
+        <ul>
+		    <li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import pygame, sys
+import pygame.gfxdraw
+import random
+from datetime import datetime
+from MutoLib import Muto
+from pygame.locals import QUIT
+
+<span class = "comment">#Initialize Pygame</span>
+pygame.init()
+screen = pygame.display.set_mode((400, 400))
+screen.fill('white')
+pygame.display.set_caption('Hexapod Muto RS Control  Center')
+
+clock = pygame.time.Clock()
+background = pygame.Surface((400,400))
+font = pygame.font.SysFont('arial',30)
+
+<span class = "comment">#Function for setting up connection with the Hexapod Muto RS robot</span>
+def findUSB():
+    for i  in range(0,5):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return -1
+
+<span class = "comment">#Utility, unused currently</span>
+def timer(seconds):
+    t1 = datetime.now()
+    t1 = int(t1.second)
+    t2 = datetime.now()
+    t2 = int(t2.second)
+    while (t2 - t1) &lt; seconds:
+        t2 = datetime.now()
+        t2 = int(t2.second)
+
+def checkNum(i):
+    typ = 2
+    try:
+        j = type(int(i)) == type(typ)
+    except:
+        return False
+    else:
+        return True
+
+<span class = "comment">#Initialize Muto robot</span>
+g_bot = Muto(f'/dev/ttyUSB{findUSB()}')
+gSpeed = 1
+
+<span class = "comment">#Runtime</span>
+while True:
+    <span class = "comment">#Closing the window will end the program</span>
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+    <span class = "comment">#Get controls</span>
+    keys = pygame.key.get_pressed()
+
+    usedKeys = [keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_s],
+                keys[pygame.K_d],keys[pygame.K_f], keys[pygame.K_q],
+                keys[pygame.K_e], keys[pygame.K_i], keys[pygame.K_o],
+                keys[pygame.K_p]]
+    <span class = "comment">#Act based on controls</span>
+    if usedKeys[0]:
+        g_bot.forward(10)
+        
+    elif usedKeys[1]:
+        g_bot.left(10)
+        
+    elif usedKeys[2]:
+        g_bot.back(10)
+        
+    elif usedKeys[3]:
+        g_bot.right(10)
+
+    elif usedKeys[4]:
+        g_bot.buzzer(255)
+        
+    elif usedKeys[5]:
+        g_bot.turnleft(10)
+
+    elif usedKeys[6]:
+        g_bot.turnright(10)
+
+    elif usedKeys[7]:
+        if gSpeed > 1:
+            gSpeed -= 1
+
+    elif usedKeys[8]:
+        gSpeed = 1
+
+    elif usedKeys[9]:
+        if gSpeed &lt; 5:
+            gSpeed += 1
+      
+    else: <span class = "comment">#If no input, disable buzzer and reset movement</span>
+        g_bot.buzzer(0)
+        g_bot.stop()
+    g_bot.speed(gSpeed) <span class = "comment">#Update speed to gSpeed</span>
+
+    pygame.display.update() <span class = "comment">#Update Pygame display</span>
+    clock.tick(20) <span class = "comment">#Framerate of window and input detection, can be changed</span>
+
+        </pre>
+        </div>
+	</main>
+    </span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>
