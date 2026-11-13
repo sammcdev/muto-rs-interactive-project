@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>convertPyToHTML.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>convertPyToHTML.py From February 23, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+<span class = "import">import datetime</span>
+
+def main():
+    path = input('Provide a file path and file name: ')
+    file = 0
+    try:
+        file = open(path)
+    except:
+        print('That is not a viable file path! Try again.')
+        main()
+        return
+
+    newContents = []
+    for i in file:
+        newLine = i
+        endCharInd = i.find('\n')
+        if '<span class = "comment">#' in i:</span>
+            ind = i.find('<span class = "comment">#')</span>
+            if ind == 0:
+                newLine = '&lt;span class = "comment">' + i[0:endCharInd] + '</span>\n'
+            else:
+                newLine = i[0:ind] + '&lt;span class = "comment">' + i[ind:endCharInd] + '</span>\n'
+        elif "<span class = "triplequote">'''" in i:</span>
+            ind = i.find("<span class = "triplequote">'''")</span>
+            if ind == 0:
+                newLine = '&lt;span class = "triplequote">' + i[ind:endCharInd] + '</span>\n'
+            else:
+                newLine = i[0:ind] + '&lt;span class = "triplequote">' + i[ind:endCharInd] + '</span>\n'
+        elif '<span class = "triplequote">"""' in i:</span>
+            ind = i.find('<span class = "triplequote">"""')</span>
+            if ind == 0:
+                newLine = '&lt;span class = "triplequote">' + i[ind:endCharInd] + '</span>\n'
+            else:
+                newLine = i[0:ind] + '&lt;span class = "triplequote">' + i[ind:endCharInd] + '</span>\n'
+        elif 'import' in i:
+            if "'" not in i and '''"''' not in i and "'''" not in i and '<span class = "comment">#' not in i:</span>
+                newLine = '&lt;span class = "import">' + i[0:endCharInd] + '</span>\n'
+        if '&lt;' in i:
+            ind = i.find('&lt;')
+            newLine = i[:ind] + '&lt;' + i[ind+1:]
+        newContents.append(newLine)
+        
+    newString = ''
+    for i in newContents:
+        newString += i
+        
+    time = datetime.datetime.now()
+    time = str(time)
+    time = time.split(".")
+    time = time[0] + "-" + time[1]
+    time = time.split(":")
+    newTime = ""
+    for i in time:
+        newTime += i
+    newTime = newTime.split(" ")
+    newTime = newTime[0] + "-" + newTime[1]
+        
+    newFile = open(f'{newTime}.txt', 'w')
+    newFile.write(newString)
+    
+main()			
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

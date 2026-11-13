@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>pygameRhythmGameDEMO.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>pygameRhythmGameDEMO.py From April 18, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import pygame, sys
+import pygame.gfxdraw
+import random, time
+from datetime import datetime
+from MutoLib import Muto
+from pygame.locals import QUIT
+
+def findUSB():
+    for i  in range(0,50):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return 1
+
+def main():
+    pygame.init()
+    joysticks = {}
+    screen = pygame.display.set_mode((400, 400))
+    screen.fill('white')
+    pygame.display.set_caption('Hexapod Muto RS Game Concept')
+
+    clock = pygame.time.Clock()
+
+    #background = pygame.image.load('test.png')
+    background = pygame.Surface((400,400))
+
+    defaultX = [75,142,208,275] # 325
+    #defaultY = 10
+
+    #Combo
+    font = pygame.font.SysFont('arial',30)
+    combo = 0
+
+    #Notes
+    objD = pygame.Surface((50,50))
+    objD.fill((247, 42, 89))
+    DleftX = defaultX[0]
+    DleftY = random.randrange(-50,300)
+
+    objF = pygame.Surface((50,50))
+    objF.fill((75, 56, 245))
+    FleftX = defaultX[1]
+    FleftY = random.randrange(-50,300)
+
+    objJ = pygame.Surface((50,50))
+    objJ.fill((229, 89, 240))
+    JleftX = defaultX[2]
+    JleftY = random.randrange(-50,300)
+
+    objK = pygame.Surface((50,50))
+    objK.fill((31, 219, 153))
+    KleftX = defaultX[3]
+    KleftY = random.randrange(-50,300)
+
+    #Hit selections
+    d = pygame.Surface((50,50))
+    d.fill((237, 92, 102))
+    f = pygame.Surface((50,50))
+    f.fill((116, 116, 252))
+    j = pygame.Surface((50,50))
+    j.fill((242, 148, 236))
+    k = pygame.Surface((50,50))
+    k.fill((105, 255, 195))
+
+    #Note speed modifiers
+    speed = 10
+    deviation = -550
+
+    #Note hit thing's highest y value visually
+    defaultY = 320
+
+    #Pressed keys storage
+    dPressed = False
+    fPressed = False
+    jPressed = False
+    kPressed = False
+
+    pressed = [0,0,0,0]
+
+    higherClearance = 60
+    lowerClearance = 60
+
+    joystickFound = False
+
+    g_bot = Muto(f'/dev/ttyUSB{findUSB()}')
+    gSpeed = 1
+    gStep = 10
+    headHeight = 5
+    emoteChoice = 0
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.WINDOWFOCUSLOST:
+                screen = pygame.display.set_mode((400, 400))
+
+            if event.type == pygame.JOYDEVICEADDED:
+                    # This event will be generated when the program starts for every
+                    # joystick, filling up the list without needing to create them manually.
+                joy = pygame.joystick.Joystick(event.device_index)
+                joysticks[joy.get_instance_id()] = joy
+                print(f"Joystick {joy.get_instance_id()} connected")
+                joystickFound = True
+
+            if event.type == pygame.JOYDEVICEREMOVED:
+                del joysticks[event.instance_id]
+                print(f"Joystick {event.instance_id} disconnected")
+        
+        axes, buttons, hats = 0,0,0
+        for joystick in joysticks.values():
+            axes = joystick.get_numaxes()
+            buttons = joystick.get_numbuttons()
+            hats = joystick.get_numhats()
+        
+        keys = pygame.key.get_pressed()
+        leftX = joystick.get_axis(0)
+        leftY = joystick.get_axis(1)
+ 
+        screen.blit(background,(0,0))
+        
+        #Note hig reg
+        # Act based on controls
+        # On the controller used, down is positive
+        downT, upT = 0.5, -0.5 # Full down is 1 and full up is -1 on the controller used
+        leftT, rightT = -0.5, 0.5
+        if keys[pygame.K_d] or (leftX < leftT and leftY > upT and leftY < downT):
+            d.fill((181, 107, 112))
+            if pressed[0] == 0 and (DleftY > defaultY - higherClearance and DleftY < defaultY + lowerClearance):
+                combo += 1
+                DleftY = random.randrange(deviation,-50)
+            pressed[0] = 1
+            g_bot.left(gStep)
+        else:
+            d.fill((237, 92, 102))
+            pressed[0] = 0
+            
+        if keys[pygame.K_f] or (leftX > leftT and leftX < rightT and leftY > downT): #Down
+            f.fill((108, 108, 148))
+            if pressed[1] == 0 and (FleftY > defaultY - higherClearance and FleftY < defaultY + lowerClearance):
+                combo += 1
+                FleftY = random.randrange(deviation,-50)
+            pressed[1] = 1
+            g_bot.back(gStep)
+        else:
+            f.fill((116, 116, 252))
+            pressed[1] = 0
+            
+        if keys[pygame.K_j] or (leftX > leftT and leftX < rightT and leftY < upT): #Up
+            j.fill((163, 121, 160))
+            if pressed[2] == 0 and (JleftY > defaultY - higherClearance and JleftY < defaultY + lowerClearance):
+                combo += 1
+                JleftY = random.randrange(deviation,-50)
+            pressed[2] = 1
+            g_bot.forward(gStep)
+        else:
+            j.fill((242, 148, 236))
+            pressed[2] = 0
+            
+        if keys[pygame.K_k] or (leftX > rightT and leftY > upT and leftY < downT):
+            k.fill((113, 163, 143))
+            if pressed[3] == 0 and (KleftY > defaultY - higherClearance and KleftY < defaultY + lowerClearance):
+                combo += 1
+                KleftY = random.randrange(deviation,-50)
+            pressed[3] = 1
+            g_bot.right(gStep)
+        else:
+            k.fill((105, 255, 195))
+            pressed[3] = 0
+
+        if not(pressed[0] or pressed[1] or pressed[2] or pressed[3]):
+            g_bot.reset()
+            g_bot.stop()
+
+        #Note miss reg and reset
+
+        if DleftY > 500:
+            DleftY = random.randrange(deviation,-50)
+            combo = 0
+        if FleftY > 500:
+            FleftY = random.randrange(deviation,-50)
+            combo = 0
+        if JleftY > 500:
+            JleftY = random.randrange(deviation,-50)
+            combo = 0
+        if KleftY > 500:
+            KleftY = random.randrange(deviation,-50)
+            combo = 0
+
+
+        #Move the notes   
+        DleftY += speed 
+        FleftY += speed
+        JleftY += speed
+        KleftY += speed
+        
+        screen.blit(background,(0,0))
+
+        #Update the combo counter
+        comboCounter = font.render(f'Combo: {combo}', False, 'White')
+        comboRect = comboCounter.get_rect()
+        comboRect.center = (200,200)
+
+        #Render screen objects
+        screen.blit(comboCounter,comboRect)
+        
+        screen.blit(d,(defaultX[0],defaultY))
+        screen.blit(f,(defaultX[1], defaultY))
+        screen.blit(j, (defaultX[2], defaultY))
+        screen.blit(k, (defaultX[3], defaultY))
+        
+        screen.blit(objD,(DleftX,DleftY))
+        screen.blit(objF,(FleftX,FleftY))
+        screen.blit(objJ,(JleftX,JleftY))
+        screen.blit(objK,(KleftX,KleftY))
+        
+        #oldKeys = pygame.key.get_pressed()
+        
+        pygame.display.update()
+        clock.tick(30)
+
+main()
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

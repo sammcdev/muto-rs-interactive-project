@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CST-463 Muto RS Hexapod</title>
+<meta charset="utf-8">
+<link href = "../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+        <h1>Configuring Muto Assistant</h1>
+    </header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+        <li><a href = "./">Back</a></li>
+		</ul>
+	</nav>
+	<main>
+        <h2 id = "blog">Configuring the Robot's Assistant Client and Server</h2>
+        This page documents how to configure the robot and a separate laptop for running the Muto Assistant Client and Server programs.
+        <h3 id = "blog" style="text-align:center">The Server</h3>
+        The server is hosted on an external device and requires three python programs, which are <span class = "code">assistantServer.py</span>, <span class = "code">speech.py</span>, and <span class = "code">geminiModule.py</span>. Prior to running them, these libraries must be installed via this command or nay variation to get it working in your environment: "<span class = "code">pip install PyAudio google-genai gTTS SpeechRecognition pygame python-dotenv</span>"
+        <br>
+        Additionally, a <span class = "code">.env</span> file must be created that contains a variable named <span class = "code">API_KEY</span> that is set to your personal Gemini API key. 
+        Then, you must make sure the Gemini model specified in <span class = "code">geminiModule.py</span> matches the one you desire to use. 
+        Also, certain devices on operating systems such as MacOS or Linux may have issues with installing certain libraries such as PyAudio. Also, pygame.midi may experience issues on MacOS if the MIDI instrument output is not manually enabled. 
+        <h3 id = "blog" style="text-align:center">The Client</h3>
+        The program for the client, which is the robot, is named <span class = "code">mutoAssistantClient.py</span> and it only needs <span class = "code">pygame</span> and <span class = "code">MutoLib</span> to be installed, which should already be in your environment if previous projects have been ran.
+        The <span class = "code">assistantServer.py</span> must be ran on the laptop first, and then the IP address of the laptop must be entered into the console of the program to connect and begin operation. The client program should be ran with the command <span class = "code">python3.12</span>.
+        <br><br>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

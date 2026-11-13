@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>mutoAssistantClient.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>mutoAssistantClient.py From February 10, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import cv2
+import numpy as np
+import time
+import datetime
+import socket, struct, io, ssl
+from PIL import Image
+
+<span class = "comment">#Convert image to bytestream (from instructor-provided code)</span>
+def pil_to_bytes(img: Image.Image, fmt="JPEG", q = 70) -> bytes:
+    <span class = "comment"># Encode a PIL image to bytes (PNG/JPEG/etc.)</span>
+    buf = io.BytesIO()
+    img.save(buf, format=fmt, quality = q)
+    return buf.getvalue()
+
+<span class = "comment"># ----------------------------
+# Utilities
+# ----------------------------</span>
+
+def open_first_camera(indices=(0,1,2), backends=(cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY)):
+    <span class = "triplequote">"""Try several camera indices/backends and return the first that works."""</span>
+    for idx in indices:
+        for be in backends:
+            cap = cv2.VideoCapture(idx, be)
+            if cap.isOpened():
+                ok, _ = cap.read()
+                if ok:
+                    print(f"[OK] Camera index {idx} (backend={be})")
+                    return cap
+            cap.release()
+    return None
+
+<span class = "comment"># ----------------------------
+# Main
+# ----------------------------</span>
+
+def main():
+    <span class = "comment"># Create client socket</span>
+    
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip = input('Enter the IP you are connecting to, otherwise leave empty for local host: ')
+    if ip == '':
+        ip = 'localhost'
+    client_socket.connect((ip, 5050))
+    print("Connected to server.")    
+
+    <span class = "comment"># Open camera</span>
+    cap = open_first_camera()
+    
+    if cap is None:
+        raise SystemExit("[ERR] No working camera found. Close other apps or try a different index.")
+
+    cv2.namedWindow("Muto RS Camera", cv2.WINDOW_NORMAL)
+    print("Press 'q' or Esc = quit.")
+    ok, frame = cap.read()
+    
+    <span class = "comment">#client_socket.recv(1024)</span>
+    
+
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            time.sleep(0.05)
+            continue
+
+        next = client_socket.recv(1024)
+        print('Continuing.')
+        if next.decode() == 'END':
+            break
+        ok, frame = cap.read()
+        <span class = "comment"># Optional resize for speed; comment out to use full resolution</span>
+        max_w = 960
+        if frame.shape[1] > max_w:
+            s = max_w / frame.shape[1]
+        frame = cv2.resize(frame, (640, 480))
+        
+        output = frame.copy()
+
+        cv2.imshow("Muto RS Camera", output)
+        timeLater = datetime.datetime.now()
+        timeLater = timeLater.microsecond
+        
+        timeBegin = datetime.datetime.now()
+        timeBegin = timeBegin.microsecond
+        cv2.imwrite('snapshotMuto.jpg', output)
+        img = Image.open('snapshotMuto.jpg').convert('RGB')
+        payload = pil_to_bytes(img)
+        client_socket.sendall(struct.pack(">Q", len(payload)))
+        client_socket.sendall(payload)
+        img.close()
+
+        key = cv2.waitKey(1) & 0xFF
+        if key in (27, ord('q'), ord('Q')):
+            client_socket.sendall('END'.encode())
+            break
+        else:
+            client_socket.sendall('CONTINUE'.encode())
+
+        <span class = "comment">#serverEnd = client_socket.recv(1024).decode()
+        #if serverEnd == 'END':
+            #break</span>
+    
+    cap.release()
+    cv2.destroyAllWindows()
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()			
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

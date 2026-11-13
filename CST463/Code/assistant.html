@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>assistant.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>assistant.py From January 29, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import speech as sp
+import geminiTest2 as g
+import cv2
+
+def open_first_camera(indices=(0,1,2), backends=(cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY)):
+    <span class = "triplequote">"""Try several camera indices/backends and return the first that works."""</span>
+    for idx in indices:
+        for be in backends:
+            cap = cv2.VideoCapture(idx, be)
+            if cap.isOpened():
+                ok, _ = cap.read()
+                if ok:
+                    print(f"[OK] Camera index {idx} (backend={be})")
+                    return cap
+            cap.release()
+    return None
+
+def main():
+    cap = open_first_camera()
+    camAvailable = not (cap is None)
+    
+    while True:
+        while True:
+            t = sp.listen()
+            if type(t) != type(None):
+                if 'muto' in t.lower():
+                    break
+        sp.playMIDI(80, 127, 0.5)
+            
+        question = sp.listen()
+        if type(None) == type(question):
+            sp.playMIDI(30, 127, 0.5)
+            sp.playMIDI(10, 127, 0.25)
+            sp.speak('There was an error detecting speech.')
+        elif question.lower() == 'close program':
+            cap.release()
+            sp.end()
+        else:
+            if int(g.analyzeAsk(question)):
+                if camAvailable:
+                    ok, frame = cap.read()
+                    cv2.imwrite('t.jpg', frame)
+                    sp.speak(g.askImage())
+                else:
+                    sp.speak('The camera is not available')
+            else:
+                sp.speak(g.ask(question))
+            sp.playMIDI(100, 127, 0.1)
+
+main()			
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

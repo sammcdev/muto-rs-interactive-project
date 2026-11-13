@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>aiModule.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>aiModule.py From September 14, 2026: Updated October 27, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+			<li><a href = "./Downloads/aiModule.py" download>Download</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+from transformers import pipeline
+from transformers import BlipProcessor, BlipForConditionalGeneration
+from transformers.image_utils import load_image
+import torch
+from PIL import Image
+
+imageProcessor = BlipProcessor.from_pretrained(
+    "Salesforce/blip-image-captioning-base"
+)
+
+imageModel = BlipForConditionalGeneration.from_pretrained(
+    "Salesforce/blip-image-captioning-base"
+)
+
+'''generator = pipeline(
+    "text-generation",
+    model="gpt2"
+)'''
+
+generator = pipeline(
+    "text-generation",
+    model="HuggingFaceTB/SmolLM2-1.7B-Instruct"
+)
+
+def ask(q):
+    prompt = "You are a robot named Muto. Do not say your name unless specifially asked. You must keep the response under 100 characters, so use simple language and be concise. This is what you are responding to: " + q
+    content = [
+        {"role" : "user",
+            "content": prompt
+        }
+    ]
+    try:
+        response = generator(
+            content,
+            max_new_tokens=30,
+            do_sample = True,
+            num_return_sequences=1
+        )
+        reply = response[0]["generated_text"][-1]['content']
+        return reply
+    except Exception as e:
+        return 'There was an error with generation.'
+
+def analyzeAsk(q):
+    prompt = "Is the following question asking to describe an image or analyze it? If so, reply only with 1, otherwise just put 0: " + q
+    content = [
+            {"role" : "user",
+                "content": prompt
+            }
+    ]
+    try:
+        response = generator(
+            content,
+            max_new_tokens=30,
+            do_sample = True,
+            num_return_sequences=1
+        )
+        reply = response[0]["generated_text"][-1]['content']
+        return reply
+    except Exception as e:
+        return 'There was an error with generation.'
+
+def analyzeIntent(q):
+    prompt = '''If this following question/prompt contains a greeting, reply with only 'g'. 
+                If asked to wave like a spider or peacock spider, reply with only 'q'. 
+                If this following question/prompt is asking to describe an image or analyze it, reply with only 'p'. 
+                If this following question is asking to move in a direction, either return 'w' for forward, return 's' for backward, return 'a' for left, or return 'd' for right. 
+                If this following question is asking to rotate in a specific, return 'l' for left or 'r' for right. 
+                If this following question is asking to sit, return 'sit'.
+                If this following question is asking to lay, return 'lay'.
+                If the following question is asking to reset your position or to stand up, return 'reset'.
+                If the following question is asking to follow, return 'follow'.
+                If the following question is asking to shuffle, return 'shuffle'.
+                If the following question is asking to either stretch forwards or stretch like a cat, return 'forwardstretch'. Do not confuse this for walking or moving forward. That is a different action as stated earlier.
+                If the following question is asking to stretch and does not specify a direction, return 'stretch'.
+                If the following question is asking you to slam your front legs into the table, return 'slam'.
+                If the following question is asking to gaze or stare into the distance, return 'gaze'.
+                If the following question is asking to dance, dance like a stick-bug, or dance side-to-side, return 'dance'.
+                Finally, if it does none of the above, return 'none'. Otherwise, if it is asking for multiple, return 'multiple'. 
+                '''
+    content = [
+            {"role" : "system",
+                "content": prompt
+            },
+            {"role" : "user",
+                "content": "Move forward."
+            },
+            {"role": "assistant",
+                "content": "w"
+            },
+            {"role" : "user",
+                    "content": "Move backward."
+            },
+            {"role": "assistant",
+                "content": "s"
+            },
+            {"role" : "user",
+                "content": "Move left."
+            },
+            {"role": "assistant",
+                "content": "a"
+            },
+            {"role" : "user",
+                    "content": "Move right."
+            },
+            {"role": "assistant",
+                "content": "d"
+            },
+            {"role" : "user",
+                "content": "Rotate left."
+            },
+            {"role": "assistant",
+                "content": "l"
+            },
+            {"role" : "user",
+                    "content": "Rotate right."
+            },
+            {"role": "assistant",
+                "content": "r"
+            },
+            {"role" : "user",
+                "content": "Sit down."
+            },
+            {"role": "assistant",
+                "content": "sit"
+            },
+            {"role" : "user",
+                    "content": "Lay down."
+            },
+            {"role": "assistant",
+                "content": "lay"
+            },
+            {"role" : "user",
+                "content": "What do you see?"
+            },
+            {"role": "assistant",
+                "content": "p"
+            },
+            {"role" : "user",
+                    "content": "Please wave like a peacock spider."
+            },
+            {"role": "assistant",
+                "content": "q"
+            },
+            {"role" : "user",
+                    "content": "What is in front of you?"
+            },
+            {"role": "assistant",
+                "content": "p"
+            },
+            {"role" : "user",
+                    "content": "Can you wave to me?"
+            },
+            {"role": "assistant",
+                "content": "q"
+            },
+            {"role" : "user",
+                "content": 'Reset position.'
+            },
+            {"role" : "assistant",
+                "content": 'reset'
+            },
+            {"role" : "user",
+                    "content": 'Stand up.'
+            },
+            {"role" : "assistant",
+                "content": 'reset'
+            },
+            {"role" : "user",
+                    "content": 'Follow me.'
+            },
+            {"role" : "assistant",
+                "content": 'follow'
+            },
+            {"role" : "user",
+                    "content": 'Track me.'
+            },
+            {"role" : "assistant",
+                "content": 'follow'
+            },
+            {"role" : "user",
+                    "content": 'Can you follow me please?'
+            },
+            {"role" : "assistant",
+                "content": 'follow'
+            },
+            {"role" : "user",
+                                "content": 'Stretch.'
+                        },
+            {"role" : "assistant",
+                "content": 'stretch'
+            },
+            {"role" : "user",
+                "content": 'Can you stretch?'
+            },
+            {"role" : "assistant",
+                "content": 'stretch'
+            },
+            {"role" : "user",
+                "content": 'Stretch forwards.'
+            },
+            {"role" : "assistant",
+                "content": 'forwardstretch'
+            },
+            {"role" : "user",
+                "content": 'Walk forward.'
+            },
+            {"role" : "assistant",
+                "content": 'w'
+            },
+            {"role" : "user",
+                "content": 'Walk ahead.'
+            },
+            {"role" : "assistant",
+                "content": 'w'
+            },
+            {"role" : "user",
+                "content": 'Walk towards me.'
+            },
+            {"role" : "assistant",
+                "content": 'follow'
+            },
+            {"role" : "user",
+                    "content": 'Stretch like a cat.'
+            },
+            {"role" : "assistant",
+                "content": 'forwardstretch'
+            },
+            {"role" : "user",
+                    "content": q
+            }
+    ]
+    try:
+        response = generator(
+            content,
+            max_new_tokens=30,
+            do_sample = True,
+            num_return_sequences=1
+        )
+        reply = response[0]["generated_text"][-1]['content']
+        return reply
+    except Exception as e:
+        return 'There was an error with generation.'
+
+def analyzeGreet(q):
+    prompt = "Does this following question/prompt contain a greeting? If so, reply only with 1, otherwise just put 0: " + q
+    content = [
+            {"role" : "user",
+                "content": prompt
+            }
+    ]
+    try:
+        response = generator(
+            content,
+            max_new_tokens=30,
+            do_sample = True,
+            num_return_sequences=1
+        )
+        reply = response[0]["generated_text"][-1]['content']
+        return reply
+    except Exception as e:
+        return 'There was an error with generation.'
+
+def askImage(filePath):
+    try:
+        # https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct
+        image = Image.open(
+            filePath
+        ).convert("RGB")
+        #content = imageProcessor.apply_chat_template(content, add_generation_prompt = True)
+        inputs = imageProcessor(image, 
+                                return_tensors="pt"
+        )
+        output = imageModel.generate(**inputs,  max_new_tokens=30)
+        caption = imageProcessor.decode(output[0], skip_special_tokens=True)
+        return caption
+    except Exception as e:
+        return 'There was an error with generation or processing.'
+
+def main():
+    print('\nResponses:')
+    print(ask('Hello, how are you?'))
+    print(analyzeIntent('Move forward please.'))
+    print(analyzeIntent('What is in front of you?'))
+    print(analyzeIntent('Rotate left.'))
+    print(analyzeIntent('Follow.'))
+    print(analyzeIntent('Shuffle.'))
+    print(analyzeIntent('Dance.'))
+    print(analyzeIntent('Stretch forward.'))
+    print(analyzeIntent('Walk forward.'))
+    print(analyzeIntent('Slam your legs into the ground.'))
+    print(analyzeIntent('Gaze into the distance.'))
+    #print(analyzeIntent('What do you see?'))
+    #print(analyzeIntent('Can you wave to me?'))
+    #print(askImage('test.png'))
+
+if __name__ == "__main__":
+    main()
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

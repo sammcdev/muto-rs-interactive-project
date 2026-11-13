@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>geminiTest2.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>geminiTest2.py From January 29, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+import os
+
+<span class = "comment"># The client gets the API key from the environment variable `API_KEY`.</span>
+load_dotenv()
+API = os.getenv("API_KEY")
+client = genai.Client(api_key = API)
+m = "gemini-2.5-flash" # Will need to be updated eventually if the model is no longer supported
+
+def ask(q):
+    response = client.models.generate_content(
+        model = m, contents = "You are a robot named Muto. Do not say your name unless specifially asked. You must keep the response under 100 characters, so use simple language and be concise." + q
+    )
+    <span class = "comment">#print(response.text)</span>
+    return response.text
+
+def analyzeAsk(q):
+    response = client.models.generate_content(
+        model = m, contents = "Is the following question asking to describe an image or analyze it? If so, reply only with 1, otherwise just put 0." + q
+    )
+    <span class = "comment">#print(response.text)</span>
+    return response.text
+
+def askImage(name = "t.jpg"):
+    image = client.files.upload(file=name)
+    
+    response = client.models.generate_content(
+        model = m,
+        contents = ["Describe this image. You must keep the response under 100 characters, so use simple language and be concise.", image],
+    )
+    <span class = "comment">#print(response.text)</span>
+    return response.text
+
+def main():
+    print(ask('Hello'))
+    print(askImage())
+
+if __name__ == "__main__":
+    main()			
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

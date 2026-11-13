@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>assistantServerV2.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>assistantServerV2.py From March 31, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+<span class = "import">import socket, struct, io</span>
+<span class = "import">from PIL import Image</span>
+<span class = "import">import datetime</span>
+<span class = "import">import speech as sp</span>
+<span class = "import">import geminiModule as g</span>
+<span class = "import">import cv2</span>
+
+<span class = "comment"># Sample code provided by instructor for receiving image</span>
+def recvall(sock, n: int) -> bytes:
+    <span class = "triplequote">"""Receive exactly n bytes or raise ConnectionError."""</span>
+    data = bytearray()
+    while len(data) &lt; n:
+        chunk = sock.recv(n - len(data))
+        if not chunk:
+            raise ConnectionError("Socket connection closed early")
+        data += chunk
+    return bytes(data)
+
+def handle_client(conn, addr, errors):
+    newTime = 0
+    try:
+        <span class = "comment"># Read 8-byte big-endian length</span>
+        header = recvall(conn, 8)
+        (length,) = struct.unpack(">Q", header)
+        <span class = "comment"># Read image payload</span>
+        payload = recvall(conn, length)
+
+        <span class = "comment"># Turn bytes -> PIL.Image</span>
+        img = Image.open(io.BytesIO(payload)).convert("RGB")
+
+        <span class = "comment"># Get time for unique name</span>
+        time = datetime.datetime.now()
+        time = str(time)
+        time = time.split(".")
+        time = time[0] + "-" + time[1]
+        time = time.split(":")
+        newTime = ""
+        for i in time:
+            newTime += i
+        newTime = newTime.split(" ")
+        newTime = newTime[0] + "-" + newTime[1]
+        
+        print(f"Received image {img.size} mode={img.mode} from {addr}")
+        <span class = "comment"># Do something with it: save or process</span>
+        img.save(f"{newTime}.png")
+        errors = 0
+    except Exception as e:
+        <span class = "comment">#print("Error:", e)</span>
+        errors += 1
+        <span class = "comment"># If more than 10 errors, end </span>
+        if errors > 10:
+            print('Closing connection.')
+            return True, errors, newTime
+    
+    return False, errors, newTime
+
+
+def main():
+    <span class = "comment"># Create the server socket</span>
+    server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    server_socket.bind(('0.0.0.0', 5050)) <span class = "comment"># Bind IP and port</span>
+    server_socket.listen()
+    print("Server is running... Waiting for a client to connect.")
+    <span class = "comment"># Accept a client connection</span>
+    client_socket, addr = server_socket.accept()
+    print(f"Client {addr} connected.")
+    cmd = ''
+    errors = 0
+    end = False
+    <span class = "comment">#camUsed = False</span>
+
+    <span class = "comment"># Runtime</span>
+    while True:
+        print('Listening...')
+        while True: <span class = "comment"># Listen for keywords to trigger listening for a question</span>
+            t = sp.listen()
+            if type(t) != type(None):
+                t = t.lower()
+                if 'muto' in t or 'robot' in t:
+                    print('Detected...')
+                    break
+        sp.playMIDI(80, 127, 0.5)
+        <span class = "comment"># Listen to question and save it as a string</span>
+        question = sp.listen()
+        if type(None) == type(question): <span class = "comment"># If it is empty, say there was an error detecting speech</span>
+            sp.playMIDI(30, 127, 0.5)
+            sp.playMIDI(10, 127, 0.25)
+            sp.speak('There was an error detecting speech.')
+        elif question.lower() in 'close program' or question.lower() == 'quit': <span class = "comment"># End program if including those key phrases</span>
+            client_socket.sendall('END'.encode())
+            sp.end()
+            break
+        else: <span class = "comment"># If it is a valid request not asking to end the program</span>
+            intent = g.analyzeIntent(question).lower()
+            if intent == 'none':
+                sp.speak(g.ask(question))
+                client_socket.sendall(intent.encode())
+            elif intent == 'multiple':
+                sp.speak('Please narrow your request for the robot since it contains multiple actions.')
+            if intent == 'p': <span class = "comment"># If it is asking to analyze an image, tell the client on the robot to send an image</span>
+                client_socket.sendall(intent.encode())
+                <span class = "comment">#camUsed = True</span>
+                print('Getting image')
+                <span class = "comment"># Handle photo reception and saving</span>
+                end, errors, newTime = handle_client(client_socket, addr, errors)
+                frame = cv2.imread(f'{newTime}.png')
+                print('Image received')
+                <span class = "comment"># Upload image and ask about what is in it</span>
+                sp.speak(g.askImage(f'{newTime}.png'))
+            elif intent == 'g':
+                sp.speak(g.ask(question))
+                client_socket.sendall(intent.encode())
+            elif intent == 'w':
+                sp.speak('Moving forward.')
+                client_socket.sendall(intent.encode())
+            elif intent == 'a':
+                sp.speak('Moving left.')
+                client_socket.sendall(intent.encode())
+            elif intent == 's':
+                sp.speak('Moving backward.')
+                client_socket.sendall(intent.encode())
+            elif intent == 'd':
+                sp.speak('Moving right.')
+                client_socket.sendall(intent.encode())
+            else:
+                 client_socket.sendall('continue'.encode())
+            sp.playMIDI(100, 127, 0.1)
+        
+        <span class = "comment">#if camUsed: # If the camera was used</span>
+            <span class = "comment">#ending = client_socket.recv(1024).decode() # Receive if program should be ended</span>
+            <span class = "comment">#camUsed = False</span>
+            <span class = "comment">#if ending == 'END':</span>
+                <span class = "comment">#break</span>
+    
+    <span class = "comment"># Close the connection to the client and the server socket </span>
+    client_socket.close()
+    server_socket.close()
+
+main()
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

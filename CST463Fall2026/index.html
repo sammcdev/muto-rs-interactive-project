@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CST-463 Fall 2026</title>
+<meta charset="utf-8">
+<link href = "../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>CST-463 Fall 2026 Landing Page</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+        <li><a href = "../">Home</a></li>
+        <li><a href = "../CST463/">Previous Blog</a></li>
+        <li><a href = "./positivitySystem">Positivity Overview</a></li>
+		</ul>
+	</nav>
+	<main>
+		<h2 id = "Introduction">Introduction</h2>
+        <p>
+            Main Guide Being Used Currently: <a href = "https://www.yahboom.net/study/Muto-RS">Muto-RS Robot Repository</a>
+            <br>The library used for controlling the robot with Python is also available there.
+        </p>
+        <h2 id = "setup">Setup</h2>
+        <p>
+            This project is a continuation of the work done during CST-463-01 during the Spring 2026 semester. With this project, I am seeking to expand upon the capabilities of the robot from the virtual assistant project to make it act more like a robotic pet. 
+            <br>
+            The newest files for the program can be found below.
+            <br><br><span style = "font-weight:bolder">Program Files: <a href = "Code/robotClientV8">robotClientV8.py</a>, <a href = "Code/robotServerLocalTEXTV4">robotServerLocalTEXTV4.py</a>, <a href = "Code/robotServerLocalV4">robotServerLocalV4.py</a>, <a href = "Code/aiModule">aiModule.py</a>, <a href = "Code/speech">speech.py</a></span>
+            <br><br>
+            The server must be ran on an external device, preferably a laptop that uses something such as Apple's M series SOCs or dedicated graphics. 
+            To run the server, you need one of the server files (<span class = "code">robotServerLocal</span> or <span class = "code">robotServerLocalTEXT</span>), <span class = "code">aiModule.py</span>, and <span class = "code">speech.py</span> programs listed above within the same directory. Also, Python version 3.12.10 is recommended. The server file can simply be executed to start it. You will need to provide your IP address on the local network to the robot for it to connect. 
+            Also, when the server is ran for the first time, it will have to download the local models it uses, which may take a little while depending on your connection. 
+            <br><br>The required libraries for the server and its associated modiules can be installed via: <span class = "code">pip install PyAudio gTTS SpeechRecognition pygame "transformers[torch]" opencv-python Pillow</span>
+        </p>
+        <p>
+            The client program for the robot should be ran using Python version 3.12.10. Also, the MutoLib library must be retrieved from the download made available at the <a href = "https://www.yahboom.net/study/Muto-RS">Muto-RS Robot Repository</a>.
+            <br>It should be installed from the file provided by them. Other libraries needed can be installed through: <span class = "code">sudo python -3.12 -m pip install numpy Pillow opencv-python</span>
+        </p>
+		<h2 id = "blog">Weekly Logs</h2>
+		<details>
+            <summary>Week 1 - Initial Goals</summary>
+        <p>
+            <strong>Week 1:</strong> This week, I laid out initial plans to create a set of programs that enables the robot to act as a robotic pet, such as a Furby. Extra motions for the robot has also been created.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotEmotes">robotEmotes.py</a></span>
+        </p>
+        </details>
+
+		<details>
+            <summary>Week 2 - Initial Client/Server</summary>
+        <p>
+            <strong>Week 2:</strong> This week, the virtual assistant project code has been reworked to utilize threads to fit the future functionality of the project. Edge detection has also been tested.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClient">robotClient.py</a>, <a href = "Code/edgeDetectionTest">edgeDetectionTest.py</a></span>
+        </p>
+        </details>
+
+		<details>
+            <summary>Week 3 - Local AI Module</summary>
+        <p>
+            <strong>Week 3:</strong> This week, the module used for AI has been completely rewritten to utilize local models instead of Google Gemini to bypass token limitations. They also provide faster responses depending on the hardware. 
+            Additionally, the robot's client program has been updated to add idle functions and a follow function. There are now three active threads in the program running simultaneously as a result of this change. 
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotServerLocal">robotServerLocal.py</a>, <a href = "Code/aiModule">aiModule.py</a>, <a href = "Code/robotClientV2">robotClientV2.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 4 - Restructuring Program Logic</summary>
+        <p>
+            <strong>Week 4:</strong> This week, work has been done to restructure the code for the robotClient and robotServer programs. A text input version of the robotServer is also now available.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotServerLocalV2">robotServerLocalV2.py</a>, <a href = "Code/robotServerLocalTEXTV2">robotServerLocalTEXTV2.py</a>, <a href = "Code/robotClientV3">robotClientV3.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 5 - New Movement and Idle State Additions</summary>
+        <p>
+            <strong>Week 5:</strong> New versions of the robotClient and robotServerLocalTEXT have been made available for the new movement functionality. Also, the aiModile.py file has received an update.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotServerLocalTEXTV3">robotServerLocalTEXTV3.py</a> <a href = "Code/robotClientV4">robotClientV4.py</a>, <a href = "Code/aiModule">aiModule.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 6 - Refining the Movement Program and Research</summary>
+        <p>
+            <strong>Week 6:</strong> A new version of the robotClient titled robotClientV4_1 is now available to fix an oversight with the robot not stretching when it stands up from laying in idle in the idle state. Also, research has been done into applications of monocular depth and edge detection for automated walking.
+            Additionally, an emotion system to influence the robot's movement speed and idle sequences is being planned, with the current values and new movements already having been mapped out.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClientV4_1">robotClientV4_1.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 7 - Robot Positivity</summary>
+        <p>
+            <strong>Week 7:</strong> This week, a basic implmentation of robot positivity discussed last week has been added.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClientV5">robotClientV5.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 8 - Modified Movements</summary>
+        <p>
+            <strong>Week 8:</strong> Adjustments have been made to aspects of the code to improve expressivity of the negative emotion. 
+            Such adjustments include modification of the functions used for shuffling, sitting, and laying so they can be done slower while not impacting the original function calls throughout the rest of the program.
+			<br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClientV6">robotClientV6.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 9 - New Movements</summary>
+        <p>
+            <strong>Week 9:</strong> Two new emotes for negativity have been added, which are gaze and slam. Shuffle has also been given its own function to simplify how it is called. Additionally, the Peacock Spider Wave has been adjusted to be slowed down by a little bit. 
+			Positivity is also now referenced in the commandHandling function to modify how the robot performs laying, sitting, gazing, and shuffling based on its emotional state. aiModule.py has also been updated alongside a new server version.
+            <br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClientV7">robotClientV7.py</a>, <a href = "Code/robotServerLocalTEXTV4">robotServerLocalTEXTV4.py</a>, <a href = "Code/robotServerLocalV4">robotServerLocalV4.py</a>, <a href = "Code/aiModule">aiModule.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 10 - Passive Camera Thread</summary>
+        <p>
+            <strong>Week 10:</strong> A basic implmenetation of a passive camera thread that runs when no command or idle action is being taken has been implemented.
+            The face detection code in the follow thread has been fixed, additional actions have been added for it, and that same logic is utilized in the passive camera thread to recognize faces when between commands and idling.
+            Also, the follow thread idling for too long will now reduce positivity, while both the follow and passive camera threads will now increment positivity upon seeing a face. 
+            <br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClientV8">robotClientV8.py</a></span>
+        </p>
+        </details>
+
+        <details>
+            <summary>Week 11 - State Ending Confirmation</summary>
+        <p>
+            <strong>Week 11:</strong> If the passive camera state is active when idle is beginning, the idle state now utilizes blocking once adding something to indicate that it is about to start so it will wait until the inner passive camera loop has ended to run. 
+            <br><span style="font-weight:bolder">Program Files: <a href = "Code/robotClientV9">robotClientV9.py</a></span>
+        </p>
+        </details>
+
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

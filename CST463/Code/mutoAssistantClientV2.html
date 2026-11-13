@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>mutoAssistantClientV2.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>mutoAssistantClientV2.py From March 31, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+<span class = "import">import cv2</span>
+<span class = "import">import numpy as np</span>
+<span class = "import">import time</span>
+<span class = "import">import datetime</span>
+<span class = "import">from MutoLib import Muto</span>
+<span class = "import">import socket, struct, io, ssl</span>
+<span class = "import">from PIL import Image</span>
+
+<span class = "comment">#Convert image to bytestream (from instructor-provided code)</span>
+def pil_to_bytes(img: Image.Image, fmt="JPEG", q = 70) -> bytes:
+    <span class = "comment"># Encode a PIL image to bytes (PNG/JPEG/etc.)</span>
+    buf = io.BytesIO()
+    img.save(buf, format=fmt, quality = q)
+    return buf.getvalue()
+
+<span class = "comment"># ----------------------------</span>
+<span class = "comment"># Utilities</span>
+<span class = "comment"># ----------------------------</span>
+
+def open_first_camera(indices=(0,1,2), backends=(cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY)):
+    <span class = "triplequote">"""Try several camera indices/backends and return the first that works."""</span>
+    for idx in indices:
+        for be in backends:
+            cap = cv2.VideoCapture(idx, be)
+            if cap.isOpened():
+                ok, _ = cap.read()
+                if ok:
+                    print(f"[OK] Camera index {idx} (backend={be})")
+                    return cap
+            cap.release()
+    return None
+
+def findUSB():
+    for i  in range(0,5):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return -1
+
+<span class = "comment"># Emotes</span>
+
+def wave(g_bot):
+    for i in range(3):
+        g_bot.motor(2, -90, 100)
+        g_bot.motor(3, 90, 100)
+        time.sleep(0.3)
+        g_bot.stop()
+        g_bot.reset()
+        time.sleep(0.3)
+
+<span class = "comment"># ----------------------------</span>
+<span class = "comment"># Main</span>
+<span class = "comment"># ----------------------------</span>
+
+def main():
+    <span class = "comment"># Create the client socket</span>
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip = input('Enter the IP you are connecting to, otherwise leave empty for local host: ')
+    if ip == '':
+        ip = 'localhost'
+    client_socket.connect((ip, 5050))
+    print("Connected to server.")    
+    g_bot = Muto(f'/dev/ttyUSB{findUSB()}')
+    <span class = "comment"># Open camera</span>
+    cap = open_first_camera()
+    
+    if cap is None:
+        raise SystemExit("[ERR] No working camera found. Close other apps or try a different index.")
+
+    cv2.namedWindow("Muto RS Camera", cv2.WINDOW_NORMAL)
+    print("Press 'q' or Esc = quit.")
+    ok, frame = cap.read()
+    
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            time.sleep(0.05)
+            continue
+
+        nxt = client_socket.recv(1024)
+        nxt = nxt.decode()
+        print('Continuing.')
+        if nxt == 'END':
+            break
+        elif nxt == 'p':
+            ok, frame = cap.read()
+            <span class = "comment"># Optional resize for speed; comment out to use full resolution</span>
+            max_w = 960
+            if frame.shape[1] > max_w:
+                s = max_w / frame.shape[1]
+            frame = cv2.resize(frame, (640, 480))
+            
+            output = frame.copy()
+
+            cv2.imshow("Muto RS Camera", output)
+            timeLater = datetime.datetime.now()
+            timeLater = timeLater.microsecond
+            
+            timeBegin = datetime.datetime.now()
+            timeBegin = timeBegin.microsecond
+            cv2.imwrite('snapshotMuto.jpg', output)
+            img = Image.open('snapshotMuto.jpg').convert('RGB')
+            payload = pil_to_bytes(img)
+            client_socket.sendall(struct.pack(">Q", len(payload)))
+            client_socket.sendall(payload)
+            img.close()
+            <span class = "comment">#key = cv2.waitKey(1) & 0xFF</span>
+            <span class = "comment">#if key in (27, ord('q'), ord('Q')):</span>
+                <span class = "comment">#client_socket.sendall('END'.encode())</span>
+                <span class = "comment">#break</span>
+            <span class = "comment">#else:</span>
+                <span class = "comment">#client_socket.sendall('CONTINUE'.encode())</span>
+        elif nxt == 'w':
+            g_bot.forward(10)
+            time.sleep(3)
+            g_bot.stop()
+            g_bot.reset()
+        elif nxt == 's':
+            g_bot.back(10)
+            time.sleep(3)
+            g_bot.stop()
+            g_bot.reset()
+        elif nxt == 'a':
+            g_bot.left(10)
+            time.sleep(3)
+            g_bot.stop()
+            g_bot.reset()
+        elif nxt == 'd':
+            g_bot.right(10)
+            time.sleep(3)
+            g_bot.stop()
+            g_bot.reset()
+        elif nxt == 'g':
+            wave(g_bot)
+        
+
+        <span class = "comment">#serverEnd = client_socket.recv(1024).decode()</span>
+        <span class = "comment">#if serverEnd == 'END':</span>
+            <span class = "comment">#break</span>
+    
+    cap.release()
+    cv2.destroyAllWindows()
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()				
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>geminiModule.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>geminiModule.py From April 16, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+import os
+
+# The client gets the API key from the environment variable `API_KEY`.
+load_dotenv()
+API = os.getenv("API_KEY")
+client = genai.Client(api_key = API)
+m = "gemini-2.5-flash" # Will need to be updated eventually if the model is no longer supported
+
+def ask(q):
+    try:
+        response = client.models.generate_content(
+            model = m, contents = "You are a robot named Muto. Do not say your name unless specifially asked. You must keep the response under 100 characters, so use simple language and be concise." + q
+        )
+        #print(response.text)
+        return response.text
+    except Exception as e:
+        return 'Gemini services may be down.'
+
+def analyzeAsk(q):
+    try:
+        response = client.models.generate_content(
+            model = m, contents = "Is the following question asking to describe an image or analyze it? If so, reply only with 1, otherwise just put 0: " + q
+        )
+        #print(response.text)
+        return response.text
+    except Exception as e:
+        return 'Gemini services may be down.'
+
+def askImage(name = "t.jpg"):
+    try: 
+        image = client.files.upload(file=name)
+        
+        response = client.models.generate_content(
+            model = m,
+            contents = ["Describe this image. You must keep the response under 100 characters, so use simple language and be concise.", image],
+        )
+        #print(response.text)
+        return response.text
+    except Exception as e:
+        return 'Gemini services may be down.'
+
+def analyzeGreet(q):
+    try:
+        response = client.models.generate_content(
+            model = m, contents = "Does this following question/prompt contain a greeting? If so, reply only with 1, otherwise just put 0: " + q
+        )
+        return response.text
+    except Exception as e:
+        return 'Gemini services may be down.'
+
+def analyzeIntent(q):
+    try:
+        response = client.models.generate_content(
+            model = m, contents = "If this following question/prompt contains a greeting, reply with only 'g'. If asked to wave like a spider or peacock spider, reply with only 'q'. If this following question/prompt is asking to describe an image or analyze it, reply with only 'p'. If this following question is asking to move in a direction, either return 'w' for forward, return 's' for backward, return 'a' for left, or return 'd' for right. If this following question is asking to rotate in a specific, return 'l' for left or 'r' for right. Finally, if it does none of the above, return 'none'. Otherwise, if it is asking for multiple, return 'multiple'. Here is the question/prompt: " + q
+        )
+        return response.text
+    except Exception as e:
+        return 'Gemini services may be down.'
+
+def main():
+    print(ask('Hello'))
+    print(askImage())
+
+if __name__ == "__main__":
+    main()
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

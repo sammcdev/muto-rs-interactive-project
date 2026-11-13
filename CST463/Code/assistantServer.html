@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>assistantServer.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>assistantServer.py From February 10, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import socket, struct, io
+from PIL import Image
+import datetime
+import speech as sp
+import geminiTest2 as g
+import cv2
+
+<span class = "comment"># Sample code provided by instructor for receiving image</span>
+def recvall(sock, n: int) -> bytes:
+    <span class = "triplequote">"""Receive exactly n bytes or raise ConnectionError."""</span>
+    data = bytearray()
+    while len(data) &lt; n:
+        chunk = sock.recv(n - len(data))
+        if not chunk:
+            raise ConnectionError("Socket connection closed early")
+        data += chunk
+    return bytes(data)
+
+def handle_client(conn, addr, errors):
+    newTime = 0
+    try:
+        <span class = "comment"># Read 8-byte big-endian length</span>
+        header = recvall(conn, 8)
+        (length,) = struct.unpack(">Q", header)
+        <span class = "comment"># Read image payload</span>
+        payload = recvall(conn, length)
+
+        <span class = "comment"># Turn bytes -> PIL.Image</span>
+        img = Image.open(io.BytesIO(payload)).convert("RGB")
+
+        <span class = "comment"># Get time for unique name</span>
+        time = datetime.datetime.now()
+        time = str(time)
+        time = time.split(".")
+        time = time[0] + "-" + time[1]
+        time = time.split(":")
+        newTime = ""
+        for i in time:
+            newTime += i
+        newTime = newTime.split(" ")
+        newTime = newTime[0] + "-" + newTime[1]
+        
+        print(f"Received image {img.size} mode={img.mode} from {addr}")
+        <span class = "comment"># Do something with it: save or process</span>
+        img.save(f"{newTime}.png")
+        errors = 0
+    except Exception as e:
+        <span class = "comment">#print("Error:", e)</span>
+        errors += 1
+        <span class = "comment"># If more than 10 errors, end </span>
+        if errors > 10:
+            print('Closing connection.')
+            return True, errors, newTime
+    
+    return False, errors, newTime
+
+<span class = "comment"># Create a server socket</span>
+
+
+def main():
+    server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    server_socket.bind(('0.0.0.0', 5050)) # Bind IP and port
+    server_socket.listen()
+    print("Server is running... Waiting for a client to connect.")
+    <span class = "comment"># Accept a client connection</span>
+    client_socket, addr = server_socket.accept()
+    print(f"Client {addr} connected.")
+    cmd = ''
+    errors = 0
+    end = False
+    camUsed = False
+    while True:
+        print('Listening...')
+        while True:
+            t = sp.listen()
+            if type(t) != type(None):
+                print(t)
+                if 'muto' in t.lower() or 'robot' in t.lower():
+                    print('Detected...')
+                    break
+        sp.playMIDI(80, 127, 0.5)
+            
+        question = sp.listen()
+        if type(None) == type(question):
+            sp.playMIDI(30, 127, 0.5)
+            sp.playMIDI(10, 127, 0.25)
+            sp.speak('There was an error detecting speech.')
+        elif question.lower() in 'close program' or question.lower() == 'quit':
+            client_socket.sendall('END.'.encode())
+            sp.end()
+        else:
+            if int(g.analyzeAsk(question)):
+                camUsed = True
+                client_socket.sendall('CONTINUE'.encode())
+                print('Getting image')
+                end, errors, newTime = handle_client(client_socket, addr, errors)
+                frame = cv2.imread(f'{newTime}.png')
+                print('Image received')
+                sp.speak(g.askImage(f'{newTime}.png'))
+            else:
+                sp.speak(g.ask(question))
+            sp.playMIDI(100, 127, 0.1)
+        <span class = "comment"># Handle photo reception and saving, and ending the program</span>
+        <span class = "comment"># Ends the server if there is an error with receiving the photo multiple times in a row</span>
+        
+        if camUsed:
+            ending = client_socket.recv(1024).decode()
+            camUsed = False
+            if ending == 'END':
+                break
+
+    client_socket.close()
+    server_socket.close()
+
+main()
+<span class = "comment"># Close the connection to the client and the server socket</span>
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>
