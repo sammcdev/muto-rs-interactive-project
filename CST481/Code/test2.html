@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>test2.py</title>
+<meta charset="utf-8">
+<link href = "../../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>test2.py From October 22, 2025</h1>
+	</header>
+    <span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+from MutoLib import Muto, servo
+import time
+import datetime
+
+def findUSB():
+    for i  in range(0,50):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return 1
+
+
+timeBegin = datetime.datetime.now()
+timeBegin = timeBegin.second
+g_bot = Muto(f"/dev/ttyUSB{findUSB()}")
+it = 0
+
+<span class = "triplequote">'''while it &lt; 3:
+    timeNow = datetime.datetime.now()
+    timeNow = timeNow.second
+    if abs(timeBegin - timeNow) > 1:
+        print('lower')
+        timeBegin = datetime.datetime.now()
+        timeBegin = timeBegin.second
+        g_bot.stop()
+        g_bot.reset()
+        time.sleep(0.5)
+        it += 1
+    else:
+        g_bot.motor(2, -50, 100)
+        g_bot.motor(3, 60, 100)'''</span>
+
+<span class = "triplequote">'''for i in range(3):
+    g_bot.motor(2, -90, 100)
+    g_bot.motor(3, 90, 100)
+    time.sleep(0.3)
+    g_bot.stop()
+    g_bot.reset()
+    time.sleep(0.3)'''</span>
+<span class = "triplequote">'''
+shiftDown = 7
+shiftUp = 4
+
+for i in range(2):
+    g_bot.motor(2, shiftDown, 100)
+    g_bot.motor(5, shiftDown, 100)
+    g_bot.motor(8, shiftDown, 100)
+
+    g_bot.motor(12, shiftUp, 100)
+    g_bot.motor(15, shiftUp, 100)
+    g_bot.motor(18, shiftUp, 100)
+
+    time.sleep(0.75)
+    g_bot.stop()
+    g_bot.reset()
+    time.sleep(0.5)
+
+    g_bot.motor(11, shiftDown, 100)
+    g_bot.motor(14, shiftDown, 100)
+    g_bot.motor(17, shiftDown, 100)
+
+    g_bot.motor(3, shiftUp, 100)
+    g_bot.motor(6, shiftUp, 100)
+    g_bot.motor(9, shiftUp, 100)
+    
+    time.sleep(0.75)
+    g_bot.stop()
+    g_bot.reset()
+    time.sleep(0.5)'''</span>
+
+g_bot.motor(4, 45, 100)
+g_bot.motor(13, -45, 100)
+time.sleep(0.25)
+
+for i in range(3):
+    g_bot.motor(2, -90, 200)
+    g_bot.motor(3, 90, 200)
+    g_bot.motor(17, -90, 200)
+    g_bot.motor(18, 90, 200)
+    time.sleep(0.5)
+    g_bot.motor(2, 0, 200)
+    g_bot.motor(3, 0, 200)
+    g_bot.motor(17, 0, 200)
+    g_bot.motor(18, 0, 200)
+    time.sleep(0.3)
+    
+g_bot.stop()
+g_bot.reset()
+<span class = "comment"># motor(servoID, angle, runtime = 100)
+# servoID is 1 through 18, 3 per leg
+# Angle of rotation is between -90 and 90
+# Runtime defaults to 100 ms, time it takes for the servo to move
+# Upper servo rotates left if 90, right if -90
+# Mid-joint servo rotates inwards if 90 (BUT DO NOT SET TO 90, IT GETS STUCK)
+# Lower-joint servo rotates upwards with positive numbers (about 40)</span>
+
+
+i = input("Press Enter to end.")
+g_bot.stop()
+g_bot.reset()	
+		</pre>
+        </div>
+	</main>
+    </span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>

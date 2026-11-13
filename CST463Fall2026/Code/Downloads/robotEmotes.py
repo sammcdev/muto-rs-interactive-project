@@ -1,0 +1,80 @@
+import cv2
+import numpy as np
+import time
+import datetime
+from MutoLib import Muto
+import socket, struct, io, ssl
+from PIL import Image
+
+def findUSB():
+    for i  in range(0,5):
+        try:
+            print(f'ttyUSB{i}')
+            g_bot = Muto(f'/dev/ttyUSB{i}')
+        except:
+            print(i)
+            continue
+        else:
+            print('success')
+            return i
+    return -1
+
+# Robot Emotes
+def wave(g_bot):
+    for i in range(3):
+        g_bot.motor(2, -90, 100)
+        g_bot.motor(3, 90, 100)
+        time.sleep(0.3)
+        g_bot.stop()
+        g_bot.reset()
+        time.sleep(0.3)
+
+def peacockSpider(g_bot):
+    g_bot.motor(4, 45, 100)
+    g_bot.motor(13, -45, 100)
+    time.sleep(0.25)
+
+    for i in range(3):
+        g_bot.motor(2, -90, 200)
+        g_bot.motor(3, 90, 200)
+        g_bot.motor(17, -90, 200)
+        g_bot.motor(18, 90, 200)
+        time.sleep(0.5)
+        g_bot.motor(2, 0, 200)
+        g_bot.motor(3, 0, 200)
+        g_bot.motor(17, 0, 200)
+        g_bot.motor(18, 0, 200)
+        time.sleep(0.3)
+    
+    g_bot.stop()
+    g_bot.reset()
+    
+def sit(robot):
+    # Movement
+    #robot.motor(9, 45, 200)
+    robot.motor(8, -80, 200)
+    #obot.motor(12, -45, 200)
+    robot.motor(11, -80, 200)
+    time.sleep(0.5)
+    
+def lay(robot):
+    robot.motor(8, -80, 200)
+    robot.motor(11, -80, 200)
+    time.sleep(0.5)
+    robot.motor(14, -80, 200)
+    robot.motor(5, -80, 200)
+    time.sleep(0.5)
+    robot.motor(2, -80, 200)
+    robot.motor(17, -80, 200)
+    time.sleep(0.5)
+    
+
+def main():
+    robot = Muto(f'/dev/ttyUSB{findUSB()}')
+    step = 10
+    sit(robot)
+    time.sleep(4)
+    robot.stop()
+    robot.reset()
+    
+main()

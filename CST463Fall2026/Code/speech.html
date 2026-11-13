@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>speech.py</title>
+<meta charset="utf-8">
+<link href = "../../index.css" rel = "stylesheet">
+</head>
+<body id = "wrap">
+	<div>
+	<header>
+		<h1>speech.py From September 14, 2026</h1>
+	</header>
+	<span id = "wrapflex">
+	<nav>
+		<ul>
+			<li><a href = "../">Go Back</a></li>
+			<li><a href = "./Downloads/speech.py" download>Download</a></li>
+		</ul>
+	</nav>
+	<main>
+		<br>
+		<div class = "code">
+        <pre>
+import speech_recognition as sr
+from gtts import gTTS
+import pygame, sys, time, pygame.midi
+from io import BytesIO
+
+pygame.mixer.init()
+pygame.midi.init()
+p = pygame.midi.Output(pygame.midi.get_default_output_id())
+p.set_instrument(0)
+
+sr.Microphone(device_index = 0)
+
+def listen():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+            #print('Say something to be translated!')
+            #Adjust for ambient noise for better accuracy
+            r.adjust_for_ambient_noise(source)
+            audio = r.listen(source)
+            text = ''
+            try: 
+                text = r.recognize_google(audio)
+            except:
+                #print('There was an error with detecting speech.')
+                return None
+            else:
+                return text
+
+def speak(text):
+    #print(text)
+    audio = BytesIO()
+    temp = gTTS(text, lang = 'en')
+    audio.truncate(0)
+    temp.write_to_fp(audio)
+    audio.seek(0)
+    pygame.mixer.music.load(audio)
+    pygame.mixer.music.play()
+
+def play(name):
+    try:
+        pygame.mixer.music.load(name)
+        pygame.mixer.music.play()
+    except:
+        #print('Error playing file. Please check if the correct name was entered.')
+        return
+
+def playMIDI(note, vol, dur = 0.1):
+    p.note_on(note, vol)
+    time.sleep(dur)
+    p.note_off(note, vol)
+
+def end():
+    pygame.midi.quit()
+    pygame.mixer.quit()
+    pygame.quit()
+    sys.exit()
+
+def main():
+    while True:
+        playMIDI(80,127)
+        print('Listening...')
+        t = ''
+        while True:
+            t = listen()
+            if type(None) != type(t):
+                break
+        speak(t)
+        speak('Next 1 2 3 4 Hello World')
+        play('test.mp3')
+        playMIDI(80, 127, 1)
+        if 'end' in t.lower():
+            end()
+            
+if __name__ == "__main__":
+    main()
+		</pre>
+        </div>
+	</main>
+	</span>
+	<footer>
+		
+	</footer>
+	</div>
+</body>
+</html>
