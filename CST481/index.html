@@ -1,1 +1,137 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <title>MindWave and Hexapod Project</title>
+    <link href = "../index.css" rel = "stylesheet">
+    <meta charset = "utf-8">
+</head>
+<body id = "wrap">
+    <header>
+        <h1>Blog for Work on the Hexapod Project</h1>
+    </header>
+    <span id = "wrapflex">
+    <nav>
+        <ul>
+            <li><a href = "../../">Home</a></li>
+            <li><a href = "./">Top of Page</a></li>
+            <li><a href = "#photo">Photo Gallery</a></li>
+            <li><a href = "controls">Controls</a></li>
+            <li><a href = "setup">Jetson Setup</a></li>
+            <li><a href = "../CST463/">Project Continuation</a></li>
+        </ul>
+    </nav>
+    <main>
+    <h2 id = "blog">Blog</h2>
+        <p>
+            Main Guide Being Used Currently: <a href = "https://www.yahboom.net/study/Muto-RS">Muto-RS Robot Repository</a>
+            <br>The library used for controlling the robot with Python is also available there.
+        </p>
+        <p>
+            The first four weeks of this project were aimed at putting the rest of the robot together, installing the operating system, and getting it to move.
+            To install the operating system, NVIDIA SDK had to be installed on a laptop with Ubuntu 18.04.6 LTS to connect with the Jetson Nano Board.
+            From there, the program downloaded what was needed and flashed it to the Jetson Nano.
+            Currently, the Jetson Nano is running Jetpack 4.6.1, which is based on Ubuntu 18. 
+            Alongside that, we are currently using Python 3.6.9 to run the programs that control the robot.
+        </p>
+        
+        <p>
+            <strong>9/22/2025:</strong> Connection between the robot and Jetson Nano was confirmed as the robot was able to take steps and use its buzzer via the MutoLib library.
+            <br><span style="font-weight:bolder">Program Files: <a href = "Code/sept22control.html">control.py</a></span>
+        </p>
+        <p>
+            <strong>9/23/2025:</strong> A way for a Python script to detect which USB port is in use by the robot to connect has been confirmed to be functional.
+            Also, a way to have continuous control of the robot without use of the terminal to type a direction using the PyGame library for constant input detection was created, although it is yet to be tested.
+        </p>
+        <p>
+            <strong>9/24/2025:</strong> The script to allow for continuous control of the robot without needing to press the enter key to register an input or specify time to move has been completed.
+            The ability to adjust the direction the robot is facing and to modify its speed have also been added. 
+            <br><span style="font-weight:bolder">Program Files: <a href = "Code/sept24control.html">controlInteractive.py</a></span> 
+        </p>
+        <p>
+            <strong>9/25/2025: </strong> Controller support has been added. Also, the buzzer can be used while moving now. Alongside this, it is also possible to modify step length with a controller or keyboard now. 
+            <br><span style="font-weight:bolder">Program Files: <a href = "Code/sept25control.html">controlInteractive2.py</a></span>
+        </p>
+        <div>
+            <figure style = "text-align:center"><img class = "media" src = "Images/robotearlymove.gif" alt = "Hexapod in Motion">
+            <figcaption style = "font-size:small;">Hexapod in Motion</figcaption></figure>
+        </div>
+        <p>
+            <strong>10/13/2025:</strong> Since the last update, quite a bit of progress has been made. Python 3.7 has been confirmed to work with MutoLib while also supporting the latest version of OpenCV. 
+            OpenCV has been used to enable the Jetson Nano to send images via the Socket and Pillow libraries to a server on another device, while also using it for recognition of balls of different colors. 
+            Using that, the robot was able to react to the location a green in its view. It can adjust itself to have the ball in the center of its field of view and move forward when it is centered, which could allow it to follow someone potentially. 
+            <br><span style = "font-weight:bolder">Program Files: <a href = "Code/ballServerOct13">ballServerV2.py</a>, <a href = "Code/ballClientOct13">ballClient.py</a></span> 
+            <br>The ballServer.py file is ran on an external device like a laptop or Raspberry Pi. The client is for the Jetson Nano on the robot. 
+        </p>
+        <p>
+            <strong>10/15/2025:</strong> The robot is now able to detect faces while detecting the green ball to move.
+            If a face is in view long enough, a picture will be taken. Also, the issue with the PyGame control window going out of focus when in use with the controller program has been fixed. 
+            If the window is out of focus, the program will redraw it to keep it in focus. 
+            <br><span style = "font-weight:bolder">Program Files: <a href = "Code/controlInteractive3">controlInteractive3.py</a>, <a href = "Code/controlPlusFace">controlPlusFace.py</a></span> 
+        </p>
+        <p>
+            <strong>10/22/2025:</strong> The robot is now able to wave, dance, and do a peacock spider wave. 
+            The file named test2.py was used to experiment with MutoLib's servo methods and its comments have details on how to use it with the Hexapod. 
+            The controlInteractive4.py file incorporates the emotes into the controls of the robot. Only two are currently supported on controller though until it gets revamped. 
+            <br><span style = "font-weight:bolder">Program Files: <a href = "Code/controlInteractive4">controlInteractive4.py</a>, <a href = "Code/test2">test2.py</a></span> 
+        </p>
+        <div>
+            <figure style = "text-align:center"><img class = "media" src = "Images/robotwavedance.gif" alt = "Hexapod Waving & Dancing">
+            <figcaption style = "font-size:small;">Hexapod Waving & Dancing</figcaption></figure>
+        </div>
+        <p>
+            <strong>10/23/2025:</strong> The controls have been revamped from last time for both the controller. Also, the ball and face programs that were combined can now have the robot wave upon seeing a face for long enough.
+            Additionally, a new program has been made to test combining the functionality of controller support and camera recognition into one program. 
+            <br><span style = "font-weight:bolder">Program Files: <a href = "Code/controlInteractive5">controlInteractive5.py</a>, 
+                <a href = "Code/controlPlusFaceWave">controlPlusFaceWave.py</a>, <a href = "Code/controlIntPlusCam.html">controlIntPlusCam.py</a></span> 
+        </p>
+        <p>
+            <strong>10/27/2025:</strong> The second Jetson Nano Development Kit that came with the robot had its OS installed. 
+        </p>
+        <p>
+            <strong>11/4/2025:</strong> A board to support the second Jetson Nano on the table has been made, and it has been installed onto it. 
+        </p>
+        <div>
+            <figure style = "text-align:center"><img class = "media" src = "Images/jetsonbaseplate.jpg" alt = "Jetson Nano on 3D-Printed Baseplate">
+            <figcaption style = "font-size:small;">Jetson Nano on 3D-Printed Baseplate</figcaption></figure>
+        </div>
+        <p>
+            <strong>11/5/2025:</strong> A game of snake from a previous project that was made using PyGame has been integrated into a small control program, enabling interactivity while the robot moves.
+            This is intended for demonstration purposes for audience engagement.
+            <br><span style = "font-weight:bolder">Program Files: <a href = "Code/pygameSnakeForMuto">pygameSnakeForMuto.py</a></span> 
+        </p>
+        <p>
+            <strong>12/4/2025:</strong> My term project for the course involved edge computing through the Jetson Nano on the robot as a client that sends photos, a Raspberry Pi as a server to transfer commands, photos, and save debug photos, and the other Jetson Nano for processing images to determine movement commands.
+            This system takes advantage of TLS/SSL for encryption, although it must be noted that it is not validated with a Certificate Authority because it is self-signed. Compression of images is also used to significantly speed up the transfer of images between the devices. 
+            For testing, client.py is a program that is identical to mutoClient.py, except for actions that utilize MutoLib, so it can work across most computers without MutoLib.
+            <br>However, this iteration of the project has an issue where it crashes after running for a little while, which seems to be caused by a desynchronization of some sort in communicaton. This will be fixed soon despite the project already having been presented.
+            <br><span style = "font-weight:bolder">Program Files: <a href = "Code/client">client.py</a>, <a href = "Code/mutoClient">mutoClient.py</a>, <a href = "Code/projectServer">projectServer.py, <a href = "Code/jetsonClient">jetsonClient.py</a></span> 
+        </p>
 
+        <h2 id = "photo">Photo Gallery</h2>
+    <p>
+        <h3>Fall Open House Images</h3>
+        <ul class = "removepoints">
+                <li><a href = "Images/robottableF2025.jpg"><img src = "Images/robottableF2025thumb.jpg" class = "thumbnail" alt = "Robot demonstration table.">
+                    <span><img src = "Images/robottableF2025.jpg" alt = "Robot demonstration table." width = "333" height = "444">
+                    <br>Robot demonstration table.
+                    </span></a>
+                </li>
+                <li><a href = "Images/robotinuseF2025.jpg"><img src = "Images/robotinuseF2025thumb.jpg" class = "thumbnail" alt = "Robot demonstration with visitors.">
+                    <span><img src = "Images/robotinuseF2025.jpg" alt = "Robot demonstration with visitors." width = "444" height = "333">
+                    <br>Robot demonstration with visitors.
+                    </span></a>
+                </li>
+                <li><a href = "Images/robotfloorF2025.jpg"><img src = "Images/robotfloorF2025thumb.jpg" class = "thumbnail" alt = "Robot controlled on floor.">
+                    <span><img src = "Images/robotfloorF2025.jpg" alt = "Robot controlled on floor." width = "266" height = "355">
+                    <br>Robot controlled on floor. 
+                    </span></a>
+                </li>
+            </ul>
+    </p>
+    </main>
+    </span>
+    <footer>
+        
+    </footer>
+</body>
+</html>
